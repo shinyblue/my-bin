@@ -1,2 +1,0 @@
-#!/bin/bash
-sudo renice 19 $(ps axf | grep apache | head -n1 | perl -pe 's/^\s+(\d+).*$/$1/')

@@ -1,2 +1,0 @@
-rm /media/important/*.backuptest -f
-touch "/media/important/`date`.backuptest"
