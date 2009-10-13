@@ -1,0 +1,26 @@
+#!/bin/bash
+# wrapper so that lpr -P destination becomes
+# lp -d destination
+
+acopy=$@;
+echo "input command: lpr $@"
+opopts=''
+while [ -n "$1" ]
+do {
+	if [ "$1" = "-P" ]
+	then {
+		#found destination
+		shift
+		opopts="$opopts -d $1"
+	}
+	else 
+		opopts="$opopts $1"
+	fi
+	shift
+}
+done;
+echo "output options: $opopts";
+#first test piping works...
+echo "lpr1...";
+/home/rich/bin/lpr2 
+

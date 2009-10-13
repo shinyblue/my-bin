@@ -1,0 +1,87 @@
+#!/bin/bash
+
+TEMPFILE=resourcetmp
+
+if [ -z "$1" -o ! -e "$1" ] 
+then
+	echo "resource_use resources_list_file [--list] [directory]"
+	echo ""
+	echo "looks for each string in resources_list_file in php or html"
+	echo "files in the directory given (or subdirectories)"
+	exit 1
+fi
+
+
+
+# {{{ start of parse
+args=''
+
+listall=''
+
+while [ "$#" -gt 0 ]
+do
+	dontcollect=''
+	case "$1" in
+
+	# Adapt for yes/no options:
+	"--list" | "-l")
+		listall='yes'
+		;;
+	
+	# collect other args
+	*)
+		[ -z "$dontcollect" ] && [ "${#args}" -eq 0 ] && args=( "$1" ) || args=( "${args[@]}" "$1" )
+		;;
+	esac
+	shift
+done
+
+
+# }}} end of parsing
+
+resources_list_file="${args[0]}"
+
+if [ ! -f "$resources_list_file" ]
+then
+	echo "Can't read $resources_list_file" >&2
+	exit 1
+fi
+
+directory="${args[1]:-.}" # change directory if one given
+
+cd "$directory" 
+
+#find all php files
+find . -name "*.php" -or -name "*.html" -or -name "*.htm" -or -name "*.css" >"$TEMPFILE"
+
+while read resource
+do
+	# find this resource in the files
+	used=0
+	keepgoing=1
+	usedin=''
+	
+	while (( $keepgoing )) 
+	do
+		if read file
+		then
+			if fgrep "$resource" "$file" >/dev/null
+			then
+				used=1
+				[ -z "$listall" ] && keepgoing=0 || usedin="$useedin"$'\n'"  in: $file"
+			fi
+		else
+			keepgoing=0
+		fi
+	done<"$TEMPFILE"
+
+	if (( $used ))
+	then 
+		echo "used: $resource $usedin"
+	else
+		echo "notused: $resource"
+	fi
+	
+done <"$resources_list_file"
+rm -f "$TEMPFILE"
+

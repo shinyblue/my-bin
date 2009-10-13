@@ -1,0 +1,50 @@
+#!/bin/bash
+# process samba stuff
+# WARNING: ecasound doesn't work with long filenames!!! it does half the work and not the rest!
+
+if [ $# -eq "0" ]
+then
+	echo "$0 usage: "
+	echo "$0 soundfile.abc [soundfile.abc ...]"
+	echo ""
+	echo "Processes soundfiles with ecasound (normalise, add reverb,"
+	echo "boost bass and high end, re-normalise)"
+	echo "Saves to soundfile_altd.abc"
+	exit
+fi
+
+while [ -n "$1" -a -e "$1" ]
+do
+	if [ "${1/_altd.}" != "$1" ]
+	then
+		echo "skipping $1 - looks already altered"
+	else
+	    echo processing $1
+#	ecasound -f:16,1,44100 -i:"$1" \
+#	    -eca:100,0,0,0 \
+#		-eal:80 \
+#	    -o:"${1%.*}"_altd.${1##*.} >/dev/null
+	    #-f:16,1,44100  \
+	#ecasound -f:16,1,44100 -i "$1" -eca:100,0,0,0 -eal:80 -o:temp.wav >/dev/null
+	ecasound '-f:16,1,44100' -i "$1" \
+		'-eal:85' \
+	    '-erc:1,2' \
+	    '-el:gverb,300,2.4,0.75,0.75,0,-16,-17' \
+	    '-erc:1,1' \
+	    '-eli:1197,0,2,2,1.1,0,0,0,0,0,0,0,0,1,2,2' \
+		'-eal:80' \
+		'-eca:100,0,0,0' \
+		'-eal:80' \
+		'-ea:117' \
+		-o:temp.wav >/dev/null
+	mv temp.wav "${1%.*}"_altd.wav
+	# ${1##*.}
+#	ecasound -f:16,1,44100 -i:"temp.wav" \
+#		-ea:115 \
+#	    -f:16,1,44100  \
+#	    -o:"${1%.*}"_altd.${1##*.} >/dev/null
+	
+	fi
+
+	shift
+done

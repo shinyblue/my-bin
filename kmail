@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+use strict;
+open (OUT, ">>/home/rich/amarok_kmail_log" );
+select OUT;
+my ($date)=`date`;
+print $date;
+print $_ while (<>);
+print "---------------\n";

@@ -1,0 +1,39 @@
+#! /bin/sh
+if [ $# -le 0 ]; then
+	echo -n "Current scheme: "
+	cat /etc/network/scheme
+	echo ""
+	echo "Usage: netscheme [ scheme [now] ]"
+	echo "       with no args, displays current scheme and this help"
+	echo "       if scheme given, "
+	echo "          1. attempts to ifdown current scheme,"
+	echo "          2. changes to scheme specified"
+	echo "          3. if "now" command given, attempts to ifup new scheme "
+	echo "       "
+	exit 0
+fi
+old=`</etc/network/scheme`
+if [ "$old" != "$1" ] 
+then
+	echo "changing scheme from $old to: $1"
+	# check scheme exists in interfaces for wlan0-scheme
+	if grep -q "^iface wlan0-$1 " /etc/network/interfaces 
+	then :
+	else echo "Scheme wlan0-$1 not specified in /etc/network/interfaces"
+		echo "scheme NOT changed."
+		exit 1
+	fi
+	# if up, bring down
+	ifconfig wlan0 | grep -q "inet addr:" && /sbin/ifdown wlan0 && echo "brought down wlan0" || echo "wlan0 was not configured"
+	
+	# change scheme and bring up
+	echo "$1" > /etc/network/scheme
+
+	if [ "x$2" = "xnow" ]
+	then
+		echo "calling ifup..."
+		/sbin/ifup -v wlan0 && echo "ifup exited ok" || echo "ifup exit with probs"
+	fi
+else
+	echo "scheme is already $1"
+fi

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+function usage_and_exit {
+	echo "Usage:"
+	echo ""
+	echo ""
+	exit $1 ; # exit script.
+}
+
+
+# {{{ start of parse
+args=''
+others=''
+
+while [ "$#" -gt 0 ]
+do
+	dontcollect=''
+	case "$1" in
+
+	# include css
+	"-css" )
+		others="$others "' -or -name "*css"' 
+		echo Searching css files too.
+		;;
+
+	# include js
+	"-js" )
+		others="$others "' -or -name "*js"' 
+		echo Searching js files too.
+		;;
+	
+	# collect other args
+	*)
+		[ "${#args}" -eq 0 ] && args=( "$1" ) || args=( "${args[@]}" "$1" )
+		;;
+	esac
+	shift
+done
+
+# }}} end of parsing
+
+# echo 'find . -name "*php" -or -name "*phptemplate" '$others'  | fgrep -v .svn | xargs grep '"${args[@]}" 
+find . -name "*php" -or -name "*phptemplate" $others | fgrep -v .svn | xargs grep "${args[@]}" 

@@ -1,0 +1,8 @@
+#!/bin/bash
+#starts internet connection
+if /usr/sbin/pppd call onetel
+then
+	ln -s /home/rich/bin/inetbyebye /home/rich/Desktop/Disconnect
+	rm /home/rich/Desktop/Connect -f
+fi
+	

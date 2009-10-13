@@ -1,0 +1,7 @@
+mount /dev/hda1 /mnt/hda1 -tauto -orw,umask=000,gid=1000
+mount /dev/hda2 /mnt/hda2 -tauto -orw,umask=000,gid=1000
+mount /dev/hda5 /mnt/hda5 -tauto -orw,umask=000,gid=1000
+mount /dev/hda6 /mnt/hda6 -tauto -orw,umask=000,gid=1000
+mount /dev/hdb1 /mnt/hdb1 -tauto -orw,umask=000,gid=1000
+mount /dev/hdb2 /mnt/hdb2 -tauto -orw,umask=000,gid=1000
+mount /dev/hdb3 /mnt/hdb3 -tauto -orw,umask=000,gid=1000

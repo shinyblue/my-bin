@@ -1,0 +1,51 @@
+#!/usr/bin/php
+<?php
+if (!isset($argv[1]) || $argv[1]=='') $fail = "Usage: phpcomments file\n";
+elseif ( !file_exists( $argv[1] ) ) $fail = "File \"$argv[1]\" doesn't exist.\n";
+if ($fail) {
+	fwrite( STDERR, $fail);
+	exit ;
+}
+
+$phpfile = file( $argv[1] );
+
+foreach ($phpfile as $line ) {
+		
+	$comment=false;
+		
+	if (!$incomment) {
+		// look for comment
+		$pos1 = strpos($line,'//');
+		$pos2 = strpos($line,'/*');
+	  	if (
+			  ($pos1!==false && $pos2===false) //found short comment
+			  ||
+			  ($pos1!==false && $pos1<$pos2) // found both, short first
+			  ) {
+		// found short comment
+		$line = substr( $line, $pos1 );
+		$comment=true;
+		}
+		elseif ($pos2!==false) {
+		// starting a long comment
+		$incomment=true;
+		$comment=true;
+		$line = substr( $line, $pos2 );
+		}
+	}
+	if ($incomment) {
+		$comment=true;
+		$pos1 = strpos( $line, '*/' );
+		if ($pos1!==false) {
+			$incomment = false;
+			$line = substr( $line,0, $pos1+2) . "\n";
+		}
+	}
+
+	if ($comment) {
+		fwrite(STDOUT, $line );
+	}
+}
+
+
+?>

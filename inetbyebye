@@ -1,0 +1,9 @@
+#!/bin/bash
+#stops internet connection
+if killall pppd || [ -e /home/rich/.inetfailed ]
+then 
+	rm -f /home/rich/Desktop/Disconnect /home/rich/.inetfailed
+	ln /home/rich/bin/inethello /home/rich/Desktop/Connect -s
+else
+	touch /home/rich/.inetfailed
+fi

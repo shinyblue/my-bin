@@ -1,0 +1,20 @@
+#!/bin/bash
+echo ""
+echo "Call like $0 -f "
+echo ""
+echo "This copies the local version of shinyblue files to the online version."
+echo "It will  NOT delete files online that do not exist locally."
+echo ""
+echo "Without -f you get nowhere."
+echo ""
+echo "You will have to enter the password numerous times."
+echo ""
+[ "$1" = "-f" ] || exit;
+cd /var/www/shinyblue/
+echo "copying from local -> shinyblue..."
+rsync -av --exclude="cms_graphics*" --exclude="_*" --exclude="*.svn*" --exclude="~*" --exclude="*.swp" ./ shinyblue@shinyblue.net:httpdocs/
+echo "copying graphics shinyblue -> local ..."
+rsync -av shinyblue@shinyblue.net:httpdocs/cms_graphics/ cms_graphics/
+echo "setting permissions on cache and cms_graphics and dl..."
+ssh shinyblue@shinyblue.net 'chmod 777 httpdocs/cms_graphics httpdocs/cache httpdocs/dl'
+cd -

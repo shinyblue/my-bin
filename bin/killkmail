@@ -1,0 +1,2 @@
+#!/bin/bash
+ps ax | egrep "\b[k]mail" | perl -pe 's/^ *(\d+).*$/$1/' | while read pid ; do kill $pid ; done

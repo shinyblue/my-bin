@@ -1,0 +1,33 @@
+#!/usr/bin/perl -w
+use strict;
+# version 19 nov 2005 11:40
+print "Warning: playlists will be added together\n" if ( $#ARGV >0 );
+die "Usage: playlistmangle <playlist.m3u>\n" if ( $#ARGV == -1 );
+
+my ($lookfor, $replacewith, $filename,$prefix)=('','',$ARGV[0] );
+
+
+while (<>)
+{
+	next if /^#/;
+	if ( $lookfor eq '' )
+	{
+		if ( m!^/root/rich! )
+		{
+			$lookfor='/root/rich';
+			$replacewith='/mnt/bulk';
+			$prefix = 'home_';
+		}
+		else
+		{
+			$lookfor='/mnt/bulk';
+			$replacewith='/root/rich';
+			$prefix = 'laptop_';
+		}
+		open (OUT, ">$prefix$filename" );
+		select OUT;
+	}
+	s!^$lookfor!$replacewith!;
+	print $_;
+}
+print STDOUT "Written $prefix$filename\n";

@@ -1,0 +1,97 @@
+#!/usr/bin/perl -w
+use strict;
+
+die( <<EOF
+Usage: $@ [options] outfile infile(s) 
+
+Creates multi-page PS (if outfile.ps) or an A4 PDF (if outfile.pdf) from several raster image inputs.
+
+options
+-1	Create black and white files from inputs.
+	This will use imagemagick to -threshold the inputs, saving as PNG
+	it will then use optipng to optimise the PNG
+-tN use N for imagemagick -threshold option, eg. 80% for darker
+
+Uses sam2p to create tiny .ps files, then psmerge to join them.
+For PDF creation, then uses gs.
+
+EOF
+	) if ( $#ARGV <2 );
+
+my ($pdf,$bw,$outfile,$threshold) = (0,0,'','50%');
+my @infiles = ();
+foreach (@ARGV)
+{
+	if ( m/^-/ )
+	{
+		# options
+		if ( m/^-1(bit)?/ ) {$bw=1 ;}
+		elsif ( m/^-t(\S+)?/ ) {$threshold=$1 ;}
+	}
+	elsif ( ! $outfile ) { $outfile = $_; }
+	else { push @infiles, $_; }
+}
+$pdf=1 if $outfile =~ m/.pdf$/ ;
+
+die( "$outfile exists!\n" ) if (-e $outfile);
+
+my @l=();
+my $c=0;
+if ($bw)
+{
+	print "Converting to 1 bit png...\n";
+	foreach (@infiles) { 
+		print "Doing $_ ..."; 
+	system("convert",
+		$_,
+		'-threshold',$threshold,
+		'-density', '300x300',
+		'-monochrome',
+		'_' . $_ . '.png') ;
+	print "done\n";
+	}
+	
+	@l=();
+	push @l, '_' . $_ . '.png' foreach (@infiles);
+#	print "optimising png...\n"; turns out that while this does optimies pngs, it has no effect on the ps file that then comes from sam2p!
+#	foreach (@l)
+#	{
+#		print "Doing $_ ..."; 
+#		system('optipng','-q',$_);
+#		print "done\n";
+#	}
+
+	@infiles = @l;
+
+}
+print "Generating optimised postscript with sam2p...\n";
+foreach (@infiles)
+{
+	print "Doing $_ ..."; 
+	system("sam2p",'-j:quiet',
+		'-e:dpi:300',
+		'-e:scale', 
+		$_, $_ . '.ps') ;
+	print "done\n";
+}
+
+
+@l=();
+push @l, $_ . '.ps' foreach (@infiles);
+
+print "Merging ps files...\n";
+system("psmerge", "-o$outfile.ps", @l);
+
+system ('rm',@l);
+system ('rm',@infiles) if ($bw); # because infiles will be our copies, not the originals.
+
+if ( ! $pdf )
+{
+	rename "$outfile.ps", "$outfile";
+}
+else
+{
+	system("ps2pdf","$outfile.ps",$outfile);
+	unlink("$outfile.ps");
+}	
+

@@ -1,0 +1,40 @@
+#!/usr/bin/php
+<?php
+if (isset($argv[1]) && ( $argv[1]=='--help' || $argv[1]=='-h' )) {
+	echo <<<EOF
+Usage: pmm_ls [path/to/PMM/files]
+
+Prints list of Pegasus folder names and their filename 
+
+Rich Lott 26 Jan 12:45. GPL2 ; )
+EOF;
+	exit;
+}
+
+if (isset($argv[1]) ) $directory = $argv[1];
+else $directory = './';
+if (substr($directory,-1,1)!=='/') $directory .= '/';
+
+//show docs directory: {{{
+$dircontent='';
+$resc = opendir($directory);
+if (!$resc)  $dircontent = "Problem opening directory $directory. Error: $php_errormsg";
+else {
+	while ($filename = readdir($resc)) {
+		if (substr($filename,-4,4)=='.PMM' && 
+			is_file($directory . $filename)
+			) {
+			$in = fopen($directory . $filename,'r');
+			$buffer = fgets($in, 4096); 
+			fclose( $in );
+			$start = strpos($buffer,chr(0));
+			if ($start>0) $foldername = substr($buffer,0,$start);
+			else $foldername = 'unknown folder';
+			echo "$filename\t$foldername\n";
+		}
+	}
+}
+unset($resc);
+// }}}
+
+?>

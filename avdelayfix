@@ -1,0 +1,3 @@
+#!/bin/sh
+#mplayer 600ms -> avdelayfix -0.6
+mencoder -oac copy -audio-delay $2 -ovc copy "$1" -o "_$1"

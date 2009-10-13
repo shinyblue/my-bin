@@ -1,0 +1,18 @@
+#!/bin/bash
+function dotest {
+	cat /proc/net/ndiswrapper/wlan0/stats | grep signal_level
+}
+function threetests {
+	echo -n "testing..." >&2
+	dotest; sleep 1
+	dotest; sleep 1
+	dotest
+	echo "done." >&2
+}
+
+while read d
+do	echo $d
+	threetests
+done
+
+exit 0

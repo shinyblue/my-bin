@@ -1,0 +1,34 @@
+#!/usr/bin/perl -w
+use strict;
+use Data::Dumper;
+
+# first, find pid from text given
+
+my $out=0;
+
+for (`ps axf`)
+{
+	s/^\s+//;
+	
+	my $line = $_;
+
+	if ( $line !~ m/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(.*)$/ )
+	{
+#		print "Looking at \n$line\n:no match\n";
+	}
+#	else{ 	print "Looking at \n$line\nhmmm. $1 - $2 - $3 \n"; }
+	my $interesting = $5;
+	
+	if ( $out == 0 )
+	{
+		if ( m/$ARGV[0]/ )
+		{
+			$out =1;
+		}
+	}
+	if ( $out == 1 )
+	{
+		print "$interesting\n";
+	}
+}
+

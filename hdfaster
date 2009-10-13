@@ -1,0 +1,2 @@
+#!/bin/bash
+hdparm -c1 -m16 /dev/hda

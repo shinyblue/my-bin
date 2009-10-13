@@ -1,0 +1,34 @@
+#!/bin/bash
+
+
+FIFO=/tmp/anything2ogg
+rm -f "$FIFO" 2>/dev/null
+mkfifo "$FIFO"
+
+function cleanup
+{
+	echo ""
+	echo Exiting! Tidy up...
+	# remove pipe
+	rm -f "$FIFO" 2>/dev/null && echo ...removed named pipe
+	# kill oggenc
+	[ $oggencpid -gt 0 ] && kill $oggencpid 2>/dev/null && echo "...killed oggenc (pid $oggencpid)"
+	# remove half-made ogg
+	rm -f "$outfile" 2>/dev/null && echo ...removed partially created $outfile
+	exit 1
+}
+
+trap cleanup SIGQUIT
+
+outfile="${1%.*}.ogg"
+oggenc "$FIFO" -o "$outfile" &
+oggencpid=$!
+mplayer "$1" -quiet -ao pcm:waveheader -ao pcm:file="$FIFO" -ao pcm:fast -vc null -vo null  2>/dev/null 1>&2  || cleanup
+wait
+rm -f "$FIFO"
+# fast,dummy real    0m16.717suser    0m14.577ssys     0m0.192s
+# fast,null real    0m16.654s user    0m14.613s sys     0m0.196s
+# not fast, null real    0m16.735s user    0m14.621s sys     0m0.268s
+
+
+

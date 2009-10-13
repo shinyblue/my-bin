@@ -1,0 +1,122 @@
+#!/usr/bin/perl -w
+use strict;
+
+die( <<EOF
+Usage: $@ 'sample text' outfile.png fontfiles...";
+If outfile ends .pdf a mult-page pdf is created. 
+(requires sam2p and psmerge and ps2pdf)
+
+Options:    
+    -rN
+    --resolution=N  set resolution in dpi, eg. -r300
+	
+    -f
+    --findall       find all .ttf files below this directory
+                    and work on those. Saves using xargs
+
+EOF
+	) if ( $#ARGV <2 );
+
+my ($sample,$outfile,$density,$findall) = ('','',92,0);
+my @infiles = ();
+foreach (@ARGV)
+{
+	if ( m/^-/ )
+	{
+		# options
+		if ( m/^(?:-r|--resolution=)(\d+)/ ) {$density=$1;}
+		elsif ( m/^(-f|--find)/ ) {$findall=1;}
+		elsif ( m/^-$/ ) { $outfile='-'; }
+	}
+	elsif ( ! $sample ) { $sample = $_; }
+	elsif ( ! $outfile ) { $outfile = $_; }
+	else { push @infiles, $_; }
+}
+
+die( "$outfile exists!\n" ) if ( $outfile ne '-' && -e $outfile);
+
+if ($findall)
+{
+	print "Searching...";
+	open( FH, 'find . -iname "*.ttf"|' );
+	while (<FH>) {chomp; push @infiles, $_;}
+	close FH;
+	print "found " . ($#infiles +1) . " ttf files\n";
+}
+
+my $prefix="_temp_";
+my $c=0;
+foreach (@infiles)
+{
+	print "doing $_\n";
+	system('convert',
+		'-background',	'white',
+		'-fill',		'black',
+		'-font',		$_,
+		'-pointsize',	'54',
+		'-density',		$density,
+		"label:$sample",
+# now the font (file)name
+		'-background',	'none',
+		'-fill',		'#aaa',
+		'-font',		'Bitstream Vera Sans',
+		'-pointsize',	'12',
+		'-density',		$density,
+		"label:$_",
+# now add the two
+ 		'-gravity',		'NorthWest',
+		'-composite',
+		'-depth',		'8',
+		$prefix.$c++.'.jpg');
+}
+if ($outfile =~ m/\.pdf$/ )
+{
+	# batch files into 10s
+	my $prefix2 = "_page";
+
+	# make list of 10 images
+	my @allfiles = (glob "$prefix*.jpg"); 
+	my @batch = ();
+	for (1 .. 15) { push @batch, $_ if ($_=shift(@allfiles)) ; }
+	$c=0;
+	my ($maxW,$maxL)=( 20*$density/2.54, 28*$density/2.54);
+	$maxW = int $maxW;
+	$maxL = int $maxL;
+	while ($#batch>-1)
+	{
+		# got 10
+		print "Doing page " . ++$c . "\n";
+		system ("convert " . join(" ",@batch) . " -append -depth 8 -resize '${maxW}x${maxL}>' -size '${maxW}x${maxL}' xc:white +swap -flatten -density $density ${prefix2}$c.jpg");
+
+		# get next 1xc:white +swap -flatten -density $density0
+		@batch = ();
+		for (1 .. 15)
+		{
+			push @batch, $_ if ($_=shift(@allfiles)) ;
+		}
+	}
+	
+	# now combine these pages into pdf.
+	foreach (glob "$prefix2*jpg")
+	{
+		print "Doing $_ to ps...\n";
+		system "sam2p -j:quiet -e -e:rot:0-e:dpi:$density $_ $_.ps";
+	}
+	print "merging...\n";
+	system "psmerge -o$prefix.ps " . join " ",glob("$prefix2*ps");
+	print "pdf-ing...\n";
+	system "ps2pdf $prefix.ps $outfile";
+	unlink (glob ("$prefix2*"),"$prefix.ps");
+}
+else
+{
+	my @args = ('convert', 
+		(glob "$prefix*.jpg"), 
+		'-append');
+	if ($outfile eq '-') { push @args, 'png:- | display -'; }
+	else {	push @args, "'$outfile'" ;}
+
+	system join ' ', @args;
+}
+unlink glob "$prefix*.jpg";
+

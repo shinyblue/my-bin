@@ -1,0 +1,5 @@
+#!/bin/bash
+mplayer "$1" -ao pcm:file="$1".wav
+
+
+

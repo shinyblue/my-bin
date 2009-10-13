@@ -1,0 +1,25 @@
+#!/bin/bash
+command=$1
+shift
+
+if [ "x$command" = "x" ]
+then
+	echo "Usage:"
+	echo "$0 command"
+	echo ""
+	echo "Command options: "
+	echo "  play"
+	echo "  stop"
+	echo "  next"
+	echo "  volumeUp | volumeDown"
+	echo "  nowPlaying"
+	echo "  playMedia"
+	command=nowPlaying
+elif [ "$command" = "playMedia" ]
+then
+	thing=playlist
+else
+	thing=player
+fi
+
+dcop --all-sessions --user rich amarok $thing $command $@

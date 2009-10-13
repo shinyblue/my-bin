@@ -1,0 +1,34 @@
+#!/bin/bash
+# get children of given pid
+if [ "x$1" = "x" ]
+then 
+	echo "No pid given." >&2
+	exit 1
+fi
+	
+
+c2=''
+
+function direct_child_of {
+	# $1 is pid
+	ps --ppid $1 --no-headers | while read pid rest;do echo $pid;done	
+}
+
+function go {
+	c2="$c2 $1"
+	c1=`direct_child_of $1`
+	if [ "x$c1" = "x" ] 
+	then :
+	else
+		for pid in $c1
+		do
+			go $pid
+		done
+	fi	
+}
+
+go $1
+echo $c2
+
+
+

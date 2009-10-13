@@ -1,0 +1,12 @@
+#!/bin/bash
+cd /home/rich
+rm -f listreech listtocopy listsarge
+cd /home/rich/apt
+ls *deb >/home/rich/listreech
+cd /home/rich
+ssh sarge "cd /home/rich/debs; ls *deb " >/home/rich/listsarge
+removelines listsarge listreech >listtocopy
+wc -l list*
+cd apt
+scp `</home/rich/listtocopy` sarge:debs/.
+echo "ok, all files are on sarge now run aptmakearchive ; apt-get update && apt-get dist-upgrade on sarge."

@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# create temporary directory
+TEMP="temp"
+TEMPINDEX=0
+while [ -e "$TEMP$TEMPINDEX" ]
+do TEMPINDEX=$(( $TEMPINDEX +1 ))
+done
+
+IMINDEX=0
+
+CWD=$(pwd)
+TEMPDIR="$TEMP$TEMPINDEX"
+mkdir "$TEMPDIR"
+
+
+while [ "x$1" != "x" ]
+do
+	echo "Doing $1..."
+	cp "$1" "$TEMPDIR/a.zip"
+	cd "$TEMPDIR"
+	unzip a.zip >/dev/null
+	if [ -d "Pictures" ]
+	then
+		filename=${1%.*}
+		mkdir "../$filename""_Images" 2>/dev/null
+		cd "Pictures" || { echo "shit can't enter Pictures" >&2 ; exit; }
+		for f in * 
+		do  
+			mv "$f" ../../"$filename"_Images/Image_$c.${f##*.} 
+			c=$(( $c + 1 ))
+		done
+		cd ..
+		rm -rf *
+	else
+		echo "No images in $filename" >&2
+	fi
+	cd "$CWD"
+	echo "Done $1..."
+	shift
+done
+rm -rf "$TEMPDIR"
+

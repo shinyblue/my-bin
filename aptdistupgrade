@@ -1,0 +1,22 @@
+#!/bin/bash
+# upgrade system
+[ "`whoami`" != "root" ] && echo you must be root! && exit 1
+echo -n Updating lists...
+if apt-get update 1>/home/rich/apt-get-log 2>&1 
+then
+	echo ok
+else
+	echo failed!
+	echo "**couldn't get updates"
+	exit 1
+fi
+echo -n Upgrading system...
+if apt-get dist-upgrade -y 2>&1 | tee -a /home/rich/apt-get-log 
+then
+	echo ok
+	grep "upgraded.*installed.*to remove" /home/rich/apt-get-log
+else
+	echo failed!
+	echo **upgrade failed, see log /home/rich/apt-get-log
+	exit 1
+fi

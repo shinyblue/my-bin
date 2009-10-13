@@ -1,0 +1,99 @@
+#!/bin/bash
+# ps2raster [OPTIONS] infile.ps outfile
+# options:
+#   -r300 resolution
+#   others will be fed to gs.
+
+function usage_and_exit {
+	echo "Usage: ps2raster [-rNNN ] infile.ps outfile "
+	echo ""
+	echo "-rNNN set resolution."
+	echo "The file extention of outfile is used to determine the type."
+	echo "eg. .png, .tiff, .jpg"
+	echo ""
+	echo "specify '%02d' as part of outfile for one file per page, for multi-page PDFs."
+	echo "PDFs worked best converting to png, then "
+	echo 'for f in *png; do convert "$f" -background white -flatten -colorspace GRAY -compress LZW "${f%png}tiff"; echo "...done $f"; done'
+	echo ""
+	exit $1 ; # exit script.
+}
+
+
+# {{{ start of parse
+args=''
+
+res='200'
+opt2=''
+
+while [ "$#" -gt 0 ]
+do
+	dontcollect=''
+	case "$1" in
+
+	# resolution overrides default 
+	"-r"* )
+		res="${1#-r}"
+		;;
+
+	# Adapt for yes/no options:
+	"--opt1" | "-o")
+		opt1='yes'
+		;;
+	
+	# --opt=value style
+	"--opt2="* )
+		opt2="${1#--opt2=}"
+		;;
+		
+	# -Ovalue style
+	"-O"* )
+		opt2="${1#-O}"
+		echo "here";
+		;;
+	
+	# --opt value style
+	"--opt2" | "-O" )
+		shift
+		opt2="$1"
+		dontcollect='true'
+		;;
+	
+	# collect other args
+	*)
+		[ -z "$dontcollect" -a "${#args}" -eq 0 ] && args=( "$1" ) || args=( "${args[@]}" "$1" )
+		;;
+	esac
+	shift
+done
+
+# }}} end of parsing
+
+# should be left with 2 args
+[ "${#args[@]}" -eq 2 ] || usage_and_exit 1;
+
+# now check we can read input and that output doesn't exist
+[ -r "${args[0]}" -a -s "${args[0]}" ] || { echo "File ${args[0]} is not readable/is empty" >&2 ; exit 1 ; }
+
+# now check we won't overwrite something
+[ -e "${args[1]}" ] && { echo "File ${args[1]} exists. Won't overwrite." >&2 ; exit 1 ; }
+
+# now get filetype of output
+filetype="${args[1]}"
+filetype="${filetype##*.}"
+case $filetype in
+	"jpeg" | "jpg" )
+		device=jpeg
+		;;
+	"tiff" | "tif" )
+		device=tifflzw
+		;;
+	"png" )
+		device=pngalpha
+		;;
+	* )
+		echo "Supported filetypes are jpeg, tiff and png" >&2
+		exit 1
+		;;
+esac
+
+gs -q -dNOPAUSE -dBATCH -r"${res}" -sDEVICE="$device" -dTextAlphaBits=4 -dGraphicsAlphaBits=4 -sOutputFile="${args[1]}" "${args[0]}"

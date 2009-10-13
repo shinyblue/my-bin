@@ -1,0 +1,4 @@
+# this does nothing - just ditches stdin!
+echo "Subject: (spam - contents removed)"
+echo ""
+echo ""

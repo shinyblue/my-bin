@@ -1,0 +1,59 @@
+#!/bin/bash
+#finds files between two dates
+echo "WARNING: this does not work with paths if -print0 used because -print0 evalutates to true (found) and is evaluated before the date tests" >&2
+if [ "$#" -lt "1" ] 
+then
+	fail=yes
+elif [ "$1" = "--help" ]
+then
+	fail=yes
+elif [ "$1" = "-h" ]
+then
+	fail=yes
+else
+
+	datearg="$1"
+	shift
+	otherargs=( "$@" )
+	[ -z "$otherargs" ] && otherargs="."
+
+	ifs_orig="$IFS"
+	IFS='-'
+	set -- ${datearg}
+	IFS="$ifs_orig"
+
+	d1="$1"
+	d2="$2"
+	echo "date 1 $d1 date 2 $d2" >&2
+
+	if [ "x$d1$d2" = "x" ] 
+	then
+		echo "Error: no dates given" >&2
+		fail=yes
+	fi
+fi
+
+if [ "$fail" = "yes" ]
+then
+	echo "Usage: findbetween earliestdate-latestdate [find options]" >&2
+	echo "       where dates are specified in [CC]YYMMDD format" >&2
+	echo "       either earliestdate or latestdate may be omitted." >&2
+	exit
+else
+	arg1=""
+	if [ -n "$d1" ]
+	then
+		arg1="-newer /tmp/findbetween1"
+		touch /tmp/findbetween1 -t ${d1}0000
+	fi
+	if [ -n "$d2" ]
+	then
+		touch /tmp/findbetween2 -t ${d2}0000
+		arg2="! -newer /tmp/findbetween2"
+	fi
+	
+	echo find "${otherargs[@]}" $arg1 $arg2  >&2
+	find "${otherargs[@]}" $arg1 $arg2  
+
+	rm /tmp/findbetween1 /tmp/findbetween2 2>/dev/null
+fi

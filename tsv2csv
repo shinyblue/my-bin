@@ -1,0 +1,29 @@
+#!/usr/bin/php
+<?php
+if ( ! $argv[1] ) exit("Usage: tsv2csv TSVFILE\n");
+if (! file_exists( $argv[1] ) ) exit( "$argv[1] does not exist." );
+
+$outfilename = "$argv[1].csv";
+
+$infile = fopen( $argv[1], 'r' );
+$outfile = fopen( $outfilename, 'w' );
+
+while ( ! feof( $infile ) )
+{
+	$line = fgets( $infile );
+	while ( $line!="" && ord( substr( $line, -1,1) )<32 )
+		$line = substr( $line, 0, strlen( $line ) -1 );
+
+	$cells = explode( "\t", $line );
+	foreach ( $cells as $key=>$value )
+	{
+		if ( strpos( $value , ',' ) || 
+			 strpos( $value , '"' ) )
+			$cells[ $key ] = '"' . str_replace( '"','""', $value) . '"';
+	}
+	fwrite( $outfile, implode( ',', $cells ) . "\n" );
+}	
+fclose( $infile );
+fclose( $outfile );
+
+?>

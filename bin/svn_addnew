@@ -1,0 +1,2 @@
+#!/bin/bash
+svn status | grep '^?' | cut -c8- | xargs svn add

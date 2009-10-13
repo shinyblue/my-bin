@@ -1,0 +1,57 @@
+#!/usr/bin/perl
+#
+# pmm_to_cnm: convert a pegasus folder to individual emails
+#
+#               Copyright (C)2003  Charlie Harvey
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+# MA  02111-1307, USA.
+# Also available on line: http://www.gnu.org/copyleft/gpl.html
+
+
+
+if ($#ARGV != 0) {
+                die("Specify PMM folder on command line!");
+}
+
+open (HEART, $ARGV[0]);
+@lines = <HEART>;
+close (HEART);
+$idx=0;
+
+print "[pmm_to_cnm]Processing pmm file ...\n";
+foreach $line(@lines) {
+	if ($line =~ /Return-Path/i) {
+		$idx++;
+	}
+	$output{$idx}="$output{$idx}$line";
+}
+
+print "[pmm_to_cnm]Processed $idx pmm emails\n";
+print "[pmm_to_cnm]Writing cnm files...\n";
+for ($i=1;$i<$idx+1;$i++) {
+    print ("[pmm_to_cnm]Writing file $i\n");
+    #if(length $i==1){$name = "00$i.cnm";}
+    #elsif (length $i==2){$name = "0$i.cnm";}
+    $name="$i.b.cnm";     
+    open (TEMP, ">$name");
+    print (TEMP $output{$i});
+    close (TEMP);    
+}
+$i--;
+print "[pmm_to_cnm]$i cnm files written\n";
+
+
+

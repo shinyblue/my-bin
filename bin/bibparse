@@ -1,0 +1,121 @@
+#!/usr/bin/perl -w
+use strict;
+
+#
+
+my ($book,$indent,$chapter,$verse)=('','');
+
+my $line;
+while ( <> )
+	{ last if /name=\"passage\" value=\"([^\"]+)\"/ ; }
+	
+# got book name, open file book.xml for writing
+/name=\"passage\" value=\"([^\"]+)\"/;
+$book = $1;
+open (OUT, ">$book.tmp" );
+
+# write headers
+print OUT '<?xml version="1.0" encoding="ISO-8859-1" ?>' . "\n" ;
+print OUT "<book>\n\t<name>$book</name>\n";
+$indent = "\t";
+
+# get to text
+while ( <> )
+	{ last if /\<div class="bible">/ ; }
+	
+# this split does following. input : rich<!--<something >lott--><is> cool
+# output: 
+# rich
+# <comment>
+# <something >
+# lott
+# </comment>
+# <is>
+#  cool
+OUTER: while ( <> )
+{
+	chomp;
+	s/\<!--/\<comment>/g;
+	s/-->/\<\/comment>/g;
+	my $line ;
+	
+	my @parts = split(/(\<.+?>)/) ;
+	my $needindent = 1;
+	my $incomment = 0;
+	my $blankline =1 ;
+	
+	for ( my $part=0; $part<=$#parts; $part++)
+	{
+		$_ = $parts[$part];
+
+		# check for new chapter starting {{{
+		if ( $_ eq '<span class="cc">' )
+		{
+			
+			if ( defined( $verse ) ) { $indent = substr( $indent, 0,-1 ); print OUT "\n$indent</verse>\n"; }
+			if ( defined( $chapter ) ) { $indent = substr( $indent, 0,-1 ); print OUT "\n$indent</chapter>\n"; }
+			$part++; # move on to chapter number
+			$chapter = $parts[ $part++ ]; # get no. and move on to close of </span>
+			
+			$verse  =1;
+			print OUT "$indent<chapter number=\"$chapter\" >\n";
+			$indent .= "\t";
+			print OUT "$indent<verse number=\"$chapter\" >\n";
+			$indent .= "\t";
+			$needindent = 1;
+		} # }}}
+		# check for new verse (without break) {{{
+		elsif ( $_ eq '<sup class="ww">' ) 
+		{
+			if ( defined( $verse ) ) { $indent = substr( $indent, 0,-1 ); print OUT "\n$indent</verse>\n"; }
+			$part++; # move on to chapter number
+			$verse = $parts[ $part++ ]; # get no. and move on to close of </span>
+			print OUT "$indent<verse number=\"$verse\" >\n";
+			$indent .= "\t";
+			$needindent = 1;
+		} # }}}
+		# check for new verse (with break) {{{
+		elsif ( $_ eq '<span class="vv">' ) 
+		{
+			if ( defined( $verse ) ) { $indent = substr( $indent, 0,-1 ); print OUT "\n$indent</verse>\n"; }
+			$part++; # move on to verse number
+			$verse = $parts[ $part++ ]; # get no. and move on to close of </span>
+			print OUT "$indent<verse number=\"$verse\" break=\"break\" >\n";
+			$indent .= "\t";
+			$needindent = 1;
+			# remove &nbsp; from start of next line
+			$parts[ $part+1 ] =~ s/^&nbsp;//;
+		} # }}}
+		elsif ( $_ eq '<h2>' ) { $part += 2; } # skip heading 
+		# check for comment {{{
+		elsif ( $_ eq '<comment>' ) { $incomment = 1; }
+		elsif ( $_ eq '</comment>' ) { $incomment = 0; }
+		elsif ( $_ eq '<\+S>' )
+		{
+			$part++; # move to actual comment part
+			print OUT "\n$indent<comment>\n$indent\t" . $parts[$part] . "\n$indent</comment>\n";
+			# now find end of comment
+			$needindent = 1;
+		}
+		# }}}
+		# check for end {{{	
+		elsif (  $_ eq '</div>' )
+		{
+			if ( defined( $verse ) ) { $indent = substr( $indent, 0,-1 ); print OUT "$indent</verse>\n"; }
+			if ( defined( $chapter ) ) { $indent = substr( $indent, 0,-1 ); print OUT "$indent</chapter>\n"; }
+			print OUT "</book>\n";	
+			last OUTER;
+		} # }}}
+		elsif ( ! $incomment && substr( $_,0,1) ne '<' && $_ ne '' )
+		{
+			print OUT $indent if ($needindent) ;
+			$needindent = 0;
+			print OUT $parts[$part] ;
+			$blankline =0 ;
+		}
+	}
+	print OUT "\n" if ( ! $blankline );
+}
+# created file now, just need to remove blank lines.
+close OUT;
+system('egrep -v \'^\s*$\' "' . $book . '.tmp" >"' . $book . '.xml"; rm -f "' . $book . '.tmp"' );

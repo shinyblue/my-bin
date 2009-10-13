@@ -1,0 +1,6 @@
+#!/bin/bash
+rm -f frameno.avi
+mencoder $1 -ovc frameno -oac mp3lame -lameopts vbr=2 -o frameno.avi
+mencoder $1 -oac copy -ovc lavc -lavcopts vcodec=mpeg4:vpass=1:vbitrate=800
+mencoder $1 -oac copy -ovc lavc -lavcopts vcodec=mpeg4:vpass=2:vbitrate=800
+

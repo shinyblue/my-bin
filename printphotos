@@ -1,0 +1,115 @@
+#!/usr/bin/perl -w
+use strict;
+use Getopt::Long;
+my $queueName = 'printer'; # cups queue
+#lpoptions -d printer -l
+#PageSize/Media Size: 4X6FULL *T4X6FULL 2L T2L A4 TA4 A6
+#PageRegion/PageRegion: 4X6FULL T4X6FULL 2L T2L A4 TA4 A6
+#Quality/Quality: PMPHOTO_DRAFT PMPHOTO_NORMAL *PMPHOTO_HIGH PLATINA_NORMAL PLATINA_HIGH PLAIN_NORMAL PLAIN_HIGH PMMATT_NORMAL PMMATT_HIGH MINIPHOTO_NORMAL
+#Ink/Ink: *COLOR MONO
+
+my %opts = ();
+GetOptions (\%opts, 'gloss!', 'draft!', 'help!', 'n=i', 'a4!', 'gui!' );
+
+$opts{'n'} = 1 if ( ! $opts{'n'} );
+
+my @photos = @ARGV;
+
+help_and_exit() if ($opts{'help'} || $#photos == -1);
+
+if ($opts{'gui'})
+{
+	my ($quality, $size, $qty);
+	# size
+	$_ = `kdialog --radiolist "What size?" 6x4 '6x4 photo size' on a4 a4 off`;
+	exit if ( $? != 0 );
+	chomp;
+	$opts{'a4'} = ($_ eq 'a4');
+	$size = $_;
+
+	# quality
+	$_ = `kdialog --radiolist "What quality/paper?" 'gloss' 'High gloss' off 'semi-gloss' 'Semi-gloss' on 'draft' 'Draft' off`;
+	exit if ( $? != 0 );
+	chomp;
+	$opts{'gloss'} = ($_ eq 'gloss');
+	$opts{'draft'} = ($_ eq 'draft');
+	$quality = $_;
+
+	# quantity
+	$_ = `kdialog --inputbox 'Copies' '1'`;
+	exit if ( $? != 0 );
+	chomp;
+	$opts{'n'} = $_ if (m/^[1-9][0-9]*$/) ;
+
+	# final confirm
+	if (0 == system("kdialog --warningcontinuecancel 'About to print $_ copies on $quality $size' "))
+	{
+		print "would do it\n";
+	}
+	else
+	{
+		exit;
+	}	
+}
+
+
+my $size = $opts{'a4'} ?  'TA4' : 'T4X6FULL';
+while ($#photos>-1)
+{
+	$_ = shift @photos;
+	
+	next unless ( -e $_ ); 
+	
+	my @lpCmd = split /\s+/, "lp -d $queueName -o PageSize=$size -o scaling=100 -o";
+
+	if ( $opts{'gloss'} )
+	{
+		push @lpCmd,  'Quality=PLATINA_HIGH';
+	}
+	elsif ( $opts{'draft'} )
+	{
+		push @lpCmd,  'Quality=PMPHOTO_DRAFT';
+	}
+	else
+	{
+		push @lpCmd,  'Quality=PMPHOTO_HIGH';
+	}
+
+	my $singleQuotedFileName =$_;
+	$singleQuotedFileName =~ s/'/'\\''/;
+	
+	# check file exists
+	die("$_ doesn't exist!\n") unless (-e $_ );
+
+	# check it's a jpeg
+	if ( ! m/\.jpe?g$/i )
+	{
+		print "$_ is not a jpeg. Converting...";
+		die("Could not convert\n") if ( system('convert', $_, '-background', 'white', '-flatten', '-quality', '95%', '/tmp/printphotos.jpg')!=0 ) ;
+		print "ok\n";
+		$_ = '/tmp/printphotos.jpg';
+		$singleQuotedFileName = '/tmp/printphotos.jpg';
+	}
+
+	# print "checking orientation of $_ with jpeginfo \'$singleQuotedFileName\'\n";
+	open FH, "jpeginfo \'$singleQuotedFileName\'|"; 
+	my $info = <FH>;
+	close FH;
+	$info =~ m/\s(\d+) x (\d+)\s/;
+
+	push @lpCmd, ('-o','landscape') if (($1/$2>1));
+	push @lpCmd, ('-n',$opts{'n'} );
+
+	push @lpCmd, $_;
+	print join(' ', @lpCmd) . "\n";
+	system @lpCmd;
+	unlink( '/tmp/printphotos.jpg') if ( -e '/temp/printphotos.jpg' );
+}
+
+sub help_and_exit
+{
+	print "usage: photos6x4print [--gloss|--draft] [-A4] [-n NN] file [file...]\n";
+	print "Creates print job(s) to print. Auto-rotates landscape images\n";
+	print "Defaults to 6x4 paper, use -A4 to use A4.\n";
+	exit 0;
+}

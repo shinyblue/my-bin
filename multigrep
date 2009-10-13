@@ -1,0 +1,40 @@
+#!/bin/bash
+# greps for multiple items
+# multigrep "filepattern" options pattern [pattern...]
+# Rich Lott 16 Dec 2004. GPL2
+if [ $# -lt 3 ]
+then echo "multigrep - find files which match list of grep expressions"
+	echo
+	echo " Usage: multigrep \"filepattern\" options pattern [pattern...]"
+	echo " Where:"
+	echo "       filepattern    like \"foo*\" or just \"*\". MUST be quoted,"
+	echo "       options        use - if you don't want to specify any."
+	echo "       pattern        grep pattern"
+	echo 
+	echo " Returns a list of all files which match all those greps"
+	exit 1
+elif [ $# -lt 4 ]
+then echo "hint: use grep if you're only using one argument!"
+fi
+TEMPFILE=~/.multigreptemp1
+TEMPFILE2=~/.multigreptemp2
+filepattern="$1"
+shift
+options="$1"
+shift
+if [[ "$options" = "-" ]] ; then options=''; fi
+
+#create first list
+grep "$1" $options $filepattern -l>$TEMPFILE
+shift
+while [ -n "$1" ] ;
+do	: # process each
+	while read f 
+	do grep "$1" $options "$f" >/dev/null 2>&1 && echo "$f">>$TEMPFILE2
+	done<$TEMPFILE
+	mv -f "$TEMPFILE2" "$TEMPFILE";
+	shift
+done
+cat $TEMPFILE
+rm -f "$TEMPFILE"
+

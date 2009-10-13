@@ -1,0 +1,9 @@
+#!/usr/bin/fontforge
+# ttf2type1
+# script to conver ttf file to pfb, pfm and afm files
+# rich 27 may 2004
+Open($1);
+i=Strrstr($1,'.');
+out=Strsub($1,0,i)+'.pfb';
+Generate(out,'',3);
+Close();

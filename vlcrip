@@ -1,0 +1,22 @@
+#!/usr/bin/perl -w
+use strict;
+my $DVD_DRIVE = '/dev/dvd1';
+
+my $HOME = glob '~';
+
+$_ = `lsdvd $DVD_DRIVE`;
+@_ = split /(\n\s*)+/, $_;
+$_[0] =~ s/Disc Title: //;
+
+my $filename = $_[0];
+my $titleNo  = sprintf("%02d", $ARGV[0]);
+
+print "Ripping Title $titleNo to $HOME/Desktop/$filename.mpg\n";
+foreach (@_)
+{
+	print "$_\n" if m/Title: $titleNo/;
+}
+
+my $cmd = "cvlc dvd:///dev/dvd1\@$titleNo --sout \"#standard{access=file,mux=ps,dst=$HOME/Desktop/$filename.mpg}\"";
+print "$cmd\n";
+system($cmd);

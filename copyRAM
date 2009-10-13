@@ -1,0 +1,6 @@
+echo will try to copy from "$1" to "$2"
+mplayer -playlist "$1" -dumpstream -dumpfile "$2"
+echo now converting to wav
+mplayer "$2" -ao pcm -aofile "$2".wav
+echo done
+

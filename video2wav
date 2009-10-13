@@ -1,0 +1,5 @@
+#!/bin/bash
+#mplayer "$1" -vo null -vc dummy -ao pcm:file="$1".wav -ao pcm:waveheader
+mplayer "$1" -vo null -vc null -ao pcm:file="$1".wav -ao pcm:waveheader
+
+

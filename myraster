@@ -1,0 +1,41 @@
+#!/bin/bash
+base=${1%.*}
+tmpa="TEMP_$base"
+
+# convert to grayscale postscript
+echo -n -e "\rStep 1 of 7               "
+convert "$1" -colorspace GRAY -resize '600>' -density 72x72 "$tmpa"_1.eps
+
+# convert to postscript with low lpi (30 is good)
+echo -n -e "\rStep 2 of 7                  "
+gs -dDITHERPPI=30 -dNOPAUSE -SOutputFile="$tmpa"_2.pcx -sDEVICE=pcxmono -dBATCH -q -r300 -dLANGUAGELEVEL=1 -q -dEPSCrop "$tmpa"_1.eps
+
+# convert to pbm
+echo -n -e "\rStep 3 of 7                  "
+convert "$tmpa"_2.pcx "$tmpa"_3.pbm
+
+# convert to svg
+echo -n -e "\rStep 4 of 7                 "
+potrace "$tmpa"_3.pbm -o "$tmpa"_4.svg -s
+
+# and now to postscript...
+# -P to postscript
+# -z no gui.
+echo -n -e "\rStep 5 of 7                 "
+inkscape -P"$tmpa"_5.ps -z "$tmpa"_4.svg 2>/dev/null || exit
+
+# poster it
+# 	-mA4 we will be creating a4 tiles
+# 	not used: -p1x1m create a poster 1meter big ish.
+#	-pA1 we will create an A1 poster
+# 	not used: -w10% leave 10% of space round edges 
+#		(for printers which can't print to edges)
+
+echo -n -e "\rStep 6 of 7                "
+poster -mA4 -pA0 "$tmpa"_5.ps >"${base}_poster.ps" || exit
+
+echo -n -e "\rStep 7 of 7               "
+ps2pdf "${base}_poster.ps" || exit
+
+rm "${tmpa}_"[245]* -f
+echo -n -e "\r                                        \r"

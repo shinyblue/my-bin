@@ -1,0 +1,3 @@
+#!/bin/bash
+# cronjob to keep backup running
+rsync -a /home/us/important/ /backupCopy/

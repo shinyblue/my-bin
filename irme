@@ -1,0 +1,91 @@
+#!/bin/bash
+#control ir
+# irme command
+function logit
+{
+	echo "$1"
+	logger -t irme "$1"
+}
+
+function startAmarok
+{
+	if [ $(ps -eo cmd | grep -c amarokapp) -eq 0 ]
+	then 
+		logit "starting amarok"
+		amarok & 
+		sleep 5; 
+	fi 
+}
+function startKaffeine
+{
+	if [ $(ps -eo cmd | grep -c kaffeine) -eq 0 ]
+	then 
+		logit "starting kaffiene"
+		kaffeine & 
+		sleep 3
+	fi
+	dcop kdesktop KScreensaverIface quit;
+	dcop kdesktop KScreensaverIface enable 0;
+}
+
+function doit
+{
+	logit "START: $1"
+
+	case "$1" in
+	"all-off")
+		doit music-off
+		doit kill-kaffeine
+		;;
+	"music-off")
+		if [ `dcop amarok player isPlaying` == "true" ] 
+		then 
+			logit "(stopping music )"
+			dcop amarok player stop
+		else
+			logit "(music not playing)"
+		fi 
+		;;
+	"amarok-start-stop-toggle")
+		startAmarok
+		if [ `dcop amarok player isPlaying` == "true" ] 
+		then 
+			logit "amarok was playing, will try to stop it"
+			dcop amarok player stop
+		else 
+			doit tv-off
+			logit "amarok was not playing, will try Play"
+			dcop amarok player play
+		fi
+		;;
+	"volume-up")
+		amixer set PCM 5%+ ;;
+	"volume-down")
+		amixer set PCM 5%- ;;
+	"tv-on")
+		doit music-off
+		startKaffeine
+		dcop kaffeine 'kaffeine-mainwindow#1' maximize
+		dcop kaffeine KaffeineIface fullscreen
+		xdotool mousemove 600 400
+		dcop kaffeine KaffeineIface playDvb
+		;;
+	"tv-off")
+		if [ `dcop kaffeine KaffeineIface isPlaying` == "true" ] 
+		then 
+			dcop kaffeine KaffeineIface stop
+			dcop kaffeine 'kaffeine-mainwindow#1' minimize
+		fi 
+		;;
+	"kill-kaffeine")
+		if [ $(ps -eo cmd | grep -c kaffeine) -ne 0 ]
+		then 
+			dcop kaffeine KaffeineIface quit &
+			sleep 1
+			pkill -USR1 kaffeine
+		fi
+		;;
+	esac
+}
+
+doit $1;

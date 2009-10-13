@@ -1,0 +1,11 @@
+#!/bin/bash
+# unmounts all samba shares
+mnt="/home/rich/mnt"
+if grep "$mnt " /proc/mounts 1>/dev/null
+then
+	smbumount $mnt
+	echo unmounted: $mnt
+fi
+mnt="/home/rich/mnt2"
+grep "$mnt " /proc/mounts 1>/dev/null && smbumount $mnt && echo unmounted: $mnt
+rm -f /home/rich/Desktop/mnt*

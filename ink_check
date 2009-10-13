@@ -1,0 +1,1 @@
+escputil -r /dev/usb/lp0 -i | grep "Ink color" -A4 | xmessage -center -file -

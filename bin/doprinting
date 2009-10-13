@@ -1,0 +1,10 @@
+#!/bin/bash
+#checks for .ps files in /home/rich, prints them with lp, moves them to .Trash
+
+cd /home/rich
+
+ls -1 *.ps 2>/dev/null | while read file 
+do	echo "printing $file"
+	lp "$file" && mv "$file" .Trash/ || echo "failed. File not moved to trash."
+done
+exit 0 # exit cleanly

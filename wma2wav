@@ -1,0 +1,5 @@
+#!/bin/bash
+while [[ -n "$1" ]] 
+do 	mplayer "$1" -ao pcm -ao pcm:file="${1%.*}".wav
+	shift
+done
