@@ -1,9 +1,0 @@
-#!/bin/bash
-# finds urls
-try=''
-while [ -n "$1" ]
-do try="$try{$1,}{,-,.}"
-shift
-done;
-echo $try
-

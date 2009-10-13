@@ -1,4 +1,0 @@
-#!/bin/bash
-# connect to crisis action's server
-ssh root@ca -p 22922
-

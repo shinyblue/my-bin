@@ -1,3 +1,0 @@
-#!/bin/bash
-AUTOADVANCE=12
-/home/rich/bin/keyjnote.py -w -a $AUTOADVANCE "$@" 
