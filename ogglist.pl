@@ -1,6 +1,9 @@
 #!/usr/bin/perl -w
 use strict;
 
+# takes list of ogg files, outputs a 
+# numbered list of artist - title
+
 my $t=1;
 while (<>)
 {

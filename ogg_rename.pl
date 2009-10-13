@@ -1,6 +1,10 @@
 #!/usr/bin/perl -w
 use strict;
 
+# takes ogg list
+# renames according to tags: artist - album - title.ogg
+# Nb. no checking: could overwrite files etc.
+
 my $t=1;
 while ($_ = shift @ARGV)
 {
