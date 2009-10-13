@@ -1,4 +1,0 @@
-#!/bin/bash
-#start playing dvd
-#vlc dvdsimple:/dev/dvd --fullscreen
-gmplayer dvd://3

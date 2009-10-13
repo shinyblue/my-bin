@@ -1,7 +1,0 @@
-#!/bin/bash
-qjackctl &				# start jack
-sleep 2					# give it a chance to start up
-#artsshell -q terminate  # kill arts
-#skill artsd				# just in case!
-#(re)start arts
-#/usr/bin/artsd -F 10 -S 4096 -a jack -d -m artsmessage -c drkonqi -l 3
