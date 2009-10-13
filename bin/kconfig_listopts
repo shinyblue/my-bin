@@ -1,3 +1,0 @@
-#!/bin/bash
-# only list lines without "is not set" in and non blank
-fgrep "is not set" -v $1 | egrep '^$' -v

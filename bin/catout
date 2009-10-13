@@ -1,3 +1,0 @@
-#!/bin/bash
-while read l
-do echo $l ; done >>/home/rich/dog

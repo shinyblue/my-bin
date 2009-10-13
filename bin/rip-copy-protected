@@ -1,3 +1,0 @@
-#!/bin/bash
-cdparanoia -d /dev/cdrom -Y -v --output-wav --batch --force-read-speed 1 1-10
-
