@@ -1,6 +1,1 @@
-#!/bin/bash
-if [ $# -ne 2 ]
-then	echo "Usage $0 filetomount wheretomountit"
-		exit 1
-fi
-mount -t iso9660 -o ro,loop=/dev/loop0 "$1" "$2"
+utility/mountiso
