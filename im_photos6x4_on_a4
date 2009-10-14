@@ -1,14 +1,1 @@
-#!/bin/bash
-# uses ImageMagick to create A4 size pages with 4 pictures on
-# each one is roughly 6x4 inches at 250dpi
-if [ "${#}" -lt "2" ] 
-then
-	echo "only ${#} arguments given"
-	echo "${@}"
-	echo "Usage: "
-	echo "${0} <imagefile> [<imagefile>...] <outputfile>"
-else 
-	# use 1800x1200 for 300dpi 6x4in
-	# 2x3 on a4 is -geometry 561x543+24+24 -tile 2x3 
-	montage -geometry "1689x1181+24+24>" -tile 2x2 "${@}"
-fi
+imagemagick/im_photos6x4_on_a4

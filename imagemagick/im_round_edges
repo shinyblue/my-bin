@@ -1,0 +1,50 @@
+#!/usr/bin/perl -w
+use strict;
+use Getopt::Long;
+
+my %opts = ();
+my @files = ();
+GetOptions (\%opts, 'display', 'background=s', 'help' );
+@files = @ARGV;
+$opts{'help'}=1 if ( $#files < 0 );
+help_and_exit() if ( $opts{'help'} );
+
+my @colouredBg = ();
+ if ($opts{'background'})
+{
+	@colouredBg = (
+		'-background', $opts{'background'},
+		'-flatten');
+}
+
+foreach my $f (@files)
+{
+	$_ = 'soft_' . $f;
+	print "Doing $f...";
+	system ('convert',
+		 $f,
+	 	'-matte',
+	   	'-virtual-pixel', 'transparent', 
+		'-channel','A', 
+		'-blur','0x16',
+		'-evaluate', 'subtract', '50%', 
+		'-evaluate', 'multiply', '2.001',
+		@colouredBg,
+		$_);
+	print "Created $_\n";
+	system('display', $_) if ($opts{'display'});
+}
+
+
+
+
+sub help_and_exit
+{
+	print <<EOF
+Usage: $0 [options]
+Where options are
+    --background=rrggbbaa
+EOF
+		;
+	exit(0);
+}

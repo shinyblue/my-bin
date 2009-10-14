@@ -1,0 +1,143 @@
+#!/usr/bin/perl -w
+use strict;
+
+my @histogram;
+my $detail=50;
+my @tmp ;
+@tmp = split /\n/, `convert $ARGV[0] -fx intensity -depth 8 histogram:- | convert - -resize '${detail}x1!' txt:-` ;
+shift @tmp;
+foreach (@tmp)
+	{ push @histogram,$1 if m/.*?\(\s*(\d+)/; }
+
+my $blackpt = -1;
+my $tmp=0;
+my $wastagePercent=2;
+
+print join (", ", @histogram ). "\n";
+
+$tmp+= $histogram[++$blackpt] while $blackpt<$detail && $tmp<($wastagePercent/100*255);
+print "Black point found at $blackpt, $tmp pxc, " .$blackpt/($detail-1)*100 ."% \n";
+
+$tmp=0;
+my $whitept = $detail;
+$tmp += $histogram[--$whitept] while $whitept>0 && $tmp<($wastagePercent/100*255);
+print "White point found at $whitept, $tmp pxc, " .$whitept/($detail-1)*100 . "%\n";
+
+print "doing levels...\n";
+system("convert $ARGV[0] -level " . $blackpt/($detail-1)*100 . "," . $whitept/($detail-1)*100 . "% int.jpg");
+exit;
+$detail=5;
+# now repeat for sinusoidal contrast. {{{
+
+@tmp = split /\n/, `convert int.jpg -fx intensity -depth 8 histogram:- | convert - -resize '${detail}x1!' -normalize txt:-` ;
+@histogram=();
+shift @tmp;
+foreach (@tmp)
+	{ push @histogram,$1 if m/.*?\(\s*(\d+)/; }
+print "new histogram: " . join (", ",@histogram) . "\n"; # }}}
+
+# find peaks {{{
+my $last = $histogram[0];
+my @dif;
+push @dif, ($histogram[$_]-$histogram[$_-1]) foreach (1..$detail-1);
+print "dif: " . join (", ", @dif ). "\n";
+
+# find where it changes sign
+my $sign=($dif[0]>0);
+my @peaks = ();
+# histogram goes from 0 to detail -1
+# dif 		goes from 0 to detail -2
+foreach (1 .. $detail-2)
+{
+	my $this_sign=($dif[$_]>0);
+	push @peaks, $_ if ($sign && !$this_sign) ; # peak not trough
+	$sign=$this_sign;
+}
+
+print "peaks: " . join (", ", @peaks ). "\n"; # }}}
+
+if ( $#peaks==0 )
+{
+	print "one peak, ok\n";
+
+	# strength of sinusoid is determined by neighbouring values
+	my $strength = $histogram[$peaks[0]-1] + $histogram[$peaks[0]] ;
+	$strength = 3 * ($strength/255);
+	print "using strength $strength\n";
+	system("convert int.jpg -sigmoidal-contrast $strength," . ($peaks[0]+0.5)/$detail*100 . "% $ARGV[0] +append miff:- | display - &");
+}
+elsif ($#peaks==-1 )
+{
+	print "no peaks. Go for lightening at max.";
+	# find darkest occurance of lightest part, apply -sigmoidal-contrast to it. 
+	my ( $maxval, $maxvalAt ) = (0,-1);
+	foreach (0 .. $detail-1) 
+	{
+		if ( $histogram[$_] > $maxval )
+		{	
+			$maxval=$histogram[$_];
+			$maxvalAt=$_;
+		}
+	}
+	print "maxval is $maxval, at $maxvalAt\ndoing sigmoidal-contrast...";
+	system("convert int.jpg -sigmoidal-contrast 3," . $maxvalAt/($detail-1)*100 . "% $ARGV[0] +append miff:- | display - &");
+
+	if (0) {
+	# find half pixel count, apply sigmoidal there...
+	my $total=0;
+	$total+=$_ foreach (@histogram);
+	$total /=2;
+	print "half pix = $total";
+
+	my $at =0;
+	$tmp=0;
+	foreach $_ ( 0 .. $detail -1)
+	{
+		$at = $_;
+		$tmp += $histogram[$at];
+		last if ( $tmp>=$total );
+	}
+	print "half pixels encountered by $at\ndoing sigmoidal-contrast...";
+	system("convert int.jpg -sigmoidal-contrast 3," . (0.5+$at/2)/($detail-1)*100 . "% $ARGV[0] +append miff:- | display - &");
+	}
+
+
+}
+else { print "multiple peaks, no further processing.\n"; system("convert int.jpg $ARGV[0] +append miff:- | display - &"); }
+
+# assume dark is good.
+if (0)
+{
+	# find darkest occurance of lightest part, apply -sigmoidal-contrast to it. 
+	my ( $maxval, $maxvalAt ) = (0,-1);
+	foreach (0 .. $detail-1) 
+	{
+		if ( $histogram[$_] > $maxval )
+		{	
+			$maxval=$histogram[$_];
+			$maxvalAt=$_;
+		}
+	}
+	print "maxval is $maxval, at $maxvalAt\ndoing sigmoidal-contrast...";
+	system("convert int.jpg -sigmoidal-contrast 3," . $maxvalAt/$detail*100 . "% $ARGV[0] +append miff:- | display - &");
+}
+
+if (0)
+{
+	# try 2: find half pixel count, apply sigmoidal there...
+	my $total=0;
+	$total+=$_ foreach (@histogram);
+	$total /=2;
+	print "half pix = $total";
+
+	my $at =0;
+	$tmp=0;
+	foreach $_ ( 0 .. $detail -1)
+	{
+		$at = $_;
+		$tmp += $histogram[$at];
+		last if ( $tmp>=$total );
+	}
+	print "half pixels encountered by $at\ndoing sigmoidal-contrast...";
+	system("convert int.jpg -sigmoidal-contrast 3," . (0.5+$at)/$detail*100 . "% $ARGV[0] +append miff:- | display - &");
+}

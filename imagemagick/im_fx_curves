@@ -1,0 +1,146 @@
+#!/bin/sh
+#
+# im_fx_curves [option]  x1,y1 x2,y2 ...
+#
+# Given a set of control points figure out a mathematical histogram curve
+# that fits those points exactly.
+#
+# The points are given as pairs of numbers, which may be comma or space
+# seperared, on the command line, or as a gnuplot data file, one control point
+# per line with spaces between the numbers. All the numbers must be between 0
+# and 1, as floting point numbers or percentages (if -p option is given).
+#
+# Options:
+#    -p | --percent     Control points are percentage values
+#    -d | --display     Display the fitted graph for 5 seconds (DEBUGING)
+#    -t | --terms n     Limit number of terms to n, (default is given points)
+#
+# For example...
+#    im_fx_curves  -p  0,20   100,90   20,80   70,50
+# results in...
+#    7.56*u^3 - 11.9*u^2 + 5.09*u + 0.2
+#
+####
+#
+# WARNING: Input arguments are NOT tested for correctness.
+# This script represents a security risk if used ONLINE.
+# I accept no responsiblity for misuse. Use at own risk.
+#
+# Anthony Thyssen    November 2005
+#
+PROGNAME=`type $0 | awk '{print $3}'`  # search for executable on path
+PROGDIR=`dirname $PROGNAME`            # extract directory of program
+PROGNAME=`basename $PROGNAME`          # base name of program
+Usage() {
+  echo >&2 "$PROGNAME:" "$@"
+  sed >&2 -n '/^###/q; s/^#$/# /; 3s/^#/# Usage:/;  3,$s/^# //p;' \
+          "$PROGDIR/$PROGNAME"
+  exit 10;
+}
+
+percent=
+terms=
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+  -p|--percent) percent=true ;;    # control points are percentage values
+  -d|--display) display=true ;;    # display the fitted gnuplot graph
+  -t|--terms)   terms=$2; shift ;; # limit number of terms to this number
+
+  --) shift; break ;;    # end of user options
+  -*) Usage "Unknown option \"$1\"" ;;
+  *)  break ;;           # end of user options
+
+  esac
+  shift   # next option
+done
+
+# convert the rest of the arguments into
+# pairs of comma separated values.
+set - `echo $* | sed 's/[, ][, ]*/ /g; s/ /,/;
+                      s/ \([^ ]*\) \([^ ]*\)/ \1,\2/g'`
+
+# Number of control points = number of parameters
+points=$#
+#echo >&2 "DEBUG: $points control points"
+[ $points -lt 2 ] && Usage "At least two or more control points are needed"
+
+# generate the gnuplot function and parameter list
+p=${terms:-$points}  # number of terms or parameters
+while [ $p -gt 0 ]; do
+  p=`expr $p - 1`
+  if [ "$f" ]; then
+    f="$f + "
+    v="$v, "
+  fi
+  v="${v}p${p}"
+  case $p in
+    0) f="${f}p${p}"
+       ;;
+    1) f="${f}p${p}*x" ;;
+    *) f="${f}p${p}*x**${p}" ;;
+  esac
+done
+function="$f"
+params="$v"
+#echo >&2 "DEBUG: function = $function"
+#echo >&2 "DEBUG: params = $params"
+
+# -----------------------------------------------
+
+# Prevent gnuplot logging the curve fit
+FIT_LOG=/dev/null
+export FIT_LOG
+
+# Generate gnuplot commands an parse the output into a IM -fx function
+{ echo "f(x) = $function";
+  echo "fit f(x) '-' via $params"
+
+  # Insert output control points directly into gnuplot input
+  m=1;  [ "$percent" ] && m=100
+  for i in "$@"; do
+    echo "$i" | awk -F, '{ print $1/'"$m"', $2/'"$m"' }'
+  done
+  echo "e"
+
+  if [ "$display" ]; then
+    echo "plot [0:1] [0:1] f(x)"
+    echo "pause 5"
+  fi
+} | gnuplot 2>&1 | sed '1,/^===/d' | awk '#
+    # Parse the gnuplot parameter list into a IM -fx function
+    #{ printf "\n%s\n", $0 }  # debugging
+    /^p/  { p = substr($1, 2)+0       # parameter number (as a number)
+            v = sprintf("%.3f", $3)   # format parameter value
+            #v = sprintf("%.3g", $3)   # has problems with "e"
+
+            # junk terms with a zero (or very small) parameter
+            if ( v == "0" || match(v, "e-") ) next
+
+            # sign of the parameter, and intra-term spacing
+            if ( substr(v,1,1) != "-" )
+              printf seen ? "+" : ""
+
+            # print parameter if not 1 or constant
+            if ( v != "1" &&  v != "-1" || p == 0 ) {
+              printf v
+              if ( p > 0 )  printf "*"
+            }
+
+            # the term of the parameter
+            if ( p == 1 ) printf "u"
+            if ( p >= 2 ) printf "u^%d", p
+
+            seen = 1  # we have seen the first parameter
+          }
+  '
+echo
+
+exit 0;
+
+# ASIDE:
+#
+# Gabe Schaffer created a perl version using the Math::Polynomial library (not
+# standard) in   "im_fx_curve.pl"
+#
+

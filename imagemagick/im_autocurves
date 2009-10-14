@@ -1,0 +1,88 @@
+#!/usr/bin/perl -w
+use strict;
+
+die( <<EOF
+Usage: $@ infile [-p|--practise] [-cN|--correction=N]
+
+-p 	practise will show you the curve in use, and will display a 
+	scale preview.
+
+-cN	set correction level. 1=v. v. subtle, 2=subtle, 3=default, 4=a lot
+
+EOF
+	) if ( $#ARGV == -1);
+
+my ($practise,$correction,$infile,$outfile)=(0,3,'','');
+foreach (@ARGV)
+{
+	if ( m/^-/ )
+	{
+		# options
+		if ( m/^--?p/ ) {$practise=1 ;}
+		elsif ( m/^(-c|--correction=)(\d)$/ ) {	$correction = $2; }
+	}
+	elsif ( ! $infile ) { $infile = $_; }
+	else { $outfile = $_; }
+}
+# if no outfile, create _altd
+die('correction level must be 1-2 (1=subtle, 4=strong)') if ( $correction<1 || $correction>4 );
+($outfile = $infile) =~ s/(^.*)(\..+$)/$1_altd_c$correction$2/ if ( ! $outfile );
+die('infile can not be same as outfile!') if ( $infile eq $outfile );
+$outfile =~ s/(^.*)(\..+)$/$1_$2/ while -e $outfile;
+
+print "processing $infile. Correction level: $correction. " . ($practise?' Practise mode, will display preview':"Saving to $outfile ") . "\n";
+
+my $ramp = `tempfile`; chomp $ramp; $ramp.=".miff";
+my @histogram;
+my @curves = (0);
+my $detail=5;
+my @tmp ;
+my $tmp; 
+@tmp = split /\n/, `convert -size 300x300 "$infile" -resize 300 -fx intensity -depth 8 histogram:- | convert - -resize '${detail}x1!' txt:-` ;
+shift @tmp;
+$tmp=0;
+foreach (@tmp)
+{ 
+	if (m/.*?\(\s*(\d+)/)
+	{
+		$tmp += $1;
+		push @histogram,$1 ;
+		push @curves,$tmp ;
+	}
+}
+
+# soften curves, ensure each is slightly above last.
+my @correctionLevels=qw|500 150 110 62|;
+$correction = $correctionLevels[$correction-1];
+$curves[$_] += ($_ / $#curves * $correction) foreach (0 .. $#curves);
+
+# normalise curve
+$curves[$_] /= $curves[$#curves] foreach (0 .. $#curves);
+
+print "histogram: " . join (", ", @histogram ). "\n";
+print "curves: " . join (", ", @curves ). "\n";
+
+# display
+$tmp = 'im_fx_curves ';
+$tmp .= '-d ' if ($practise);
+$tmp.= ($_/$#curves) . ",$curves[$_] " foreach (0 .. $#curves);
+$tmp = `$tmp`;
+
+
+$tmp="convert -size 10x255 gradient: -fx '$tmp' -flip $ramp";
+print "$tmp\n";
+system($tmp);
+if ($practise)
+{
+	$tmp=
+		"convert -size 600x600 \"$infile\" -resize 600 $ramp -virtual-pixel edge -fx v.p{0,u*v.h} " .
+		"miff:- | display -";
+}
+else
+{
+	$tmp=
+		"convert \"$infile\" $ramp -virtual-pixel edge -fx v.p{0,u*v.h} \"$outfile\" ";
+}
+print "$tmp\n";
+system($tmp);
+unlink($ramp);
