@@ -3,6 +3,8 @@ use strict;
 use Getopt::Long;
 use Pod::Usage;
 
+my $debugging=1;
+
 # See http://perldoc.perl.org/Getopt/Long.html
 # can set default options like this:
 my %opts = ( 
@@ -40,7 +42,7 @@ my $file_manager = 'thunar';
 
 # 1. get clipboard
 $_ = `xclip -o`;
-print "Source: $_\n";
+output("Source: $_\n");
 
 # 2. convert to server, share, path
 my ($server,$share,$pathWin,$pathNix) = ();
@@ -56,19 +58,19 @@ if ( m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
 	$share =~ s/(.*)/\l$1/;
 	$pathNix =~ s{\\}{/}g if $pathNix =~ m{^\\};
 	$pathWin =~ s{/}{\\}g if $pathWin =~ m{^/};
-	print "Parsed output: \n\tServer: $server\n\tShare: $share\n\tPath: $pathNix\n";
+	output("Parsed output: \n\tServer: $server\n\tShare: $share\n\tPath: $pathNix\n");
 }
 else
 {
-	die('didn\'t recognise "$_"');
+	mydie("FAIL: didn't recognise '$_'");
 }
 
 # 3. do we have that share mounted?
-die("share $server/$share not mounted?") unless ( -d "/smb/$server/$share" );
+mydie("share $server/$share not mounted?") unless ( -d "/smb/$server/$share" );
 
 # check it exists
 my $path = "/smb/$server/$share/$pathNix";
-die("file/folder does not exist") unless ( -e $path );
+mydie("file/folder does not exist") unless ( -e $path );
 
 if (! $opts{'file'})
 {
@@ -77,6 +79,18 @@ if (! $opts{'file'})
 }
 exec($file_manager, $path);
 
+
+sub output
+{
+	my ($msg) = @_;
+	print $msg;
+	system('logger','-t','openFolder',$msg) if ($debugging);
+}
+sub mydie
+{
+	output( @_ );
+	exit 1;
+}
 
 
 __END__
