@@ -29,14 +29,21 @@ die $usage unless (@files==1);
 
 # split filename up
 $_ = $files[0];
-if ( m{^/[^/]} && ! -d $_ )
+
+# if local, try to resolve symlinks
+if ( m{^/[^/]} )
 {
+	# ensure ends with trailing / if a dir
+	s{$}{/} if ( -d $_ && ! m{/$} );
+
 	my ($p, $f) = m{^(.*/)(.*?)$};
-	chdir $p;
-	$p=`pwd -P`;
+
+	print "chdir: $p\n";
+	$p=`cd "$p" ; pwd -P`;
 	chomp $p;
-	print "Path resolved to $p$f\n" if ($_ != "$p$f" );
-	$_="$p$f";
+
+	print "Path resolved to $p/$f\n" if ($_ ne "$p/$f" );
+	$_="$p/$f";
 }
 my ($server,$share,$pathWin,$pathNix) = ();
 if ( m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
