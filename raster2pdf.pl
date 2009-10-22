@@ -4,6 +4,11 @@ use Getopt::Long;
 use Pod::Usage;
 use Data::Dumper; 
 
+die('sam2p required. sudo apt-get install sam2p') if system("which sam2p >/dev/null");
+die('convert required. sudo apt-get install imagemagick') if system("which convert >/dev/null");
+die('pdftk required. sudo apt-get install pdftk') if system("which pdftk >/dev/null");
+die('ps2pdf required. sudo apt-get install ghostscript') if system("which ps2pdf >/dev/null");
+
 # See http://perldoc.perl.org/Getopt/Long.html
 # can set default options like this:
 my %opts = (
