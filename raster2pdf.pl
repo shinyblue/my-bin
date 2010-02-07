@@ -69,7 +69,7 @@ foreach (@inputs)
 		'-e:scale', 
 		$_, $_ . '.ps') ;
 	print "...";
-	system("ps2pdf14", '-sPAPERSIZE=a4', $_ . '.ps', $_ . '.pdf');
+	system("ps2pdf14", '-sPAPERSIZE=a4', '-dPDFSETTINGS=/prepress', $_ . '.ps', $_ . '.pdf');
 	print "done\n";
 }
 

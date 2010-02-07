@@ -28,7 +28,7 @@ if ($opts{'gui'})
 	$size = $_;
 
 	# quality
-	$_ = `kdialog --radiolist "What quality/paper?" 'gloss' 'High gloss' off 'semi-gloss' 'Semi-gloss' on 'draft' 'Draft' off`;
+	$_ = `kdialog --radiolist "What quality/paper?" 'gloss' 'High gloss' on 'semi-gloss' 'Semi-gloss' off 'draft' 'Draft' off`;
 	exit if ( $? != 0 );
 	chomp;
 	$opts{'gloss'} = ($_ eq 'gloss');
@@ -82,10 +82,11 @@ while ($#photos>-1)
 	die("$_ doesn't exist!\n") unless (-e $_ );
 
 	# check it's a jpeg
-	if ( ! m/\.jpe?g$/i )
+	# force this because it seems to play up with jpgs too...
+	if ( 1 || ! m/\.jpe?g$/i )
 	{
 		print "$_ is not a jpeg. Converting...";
-		die("Could not convert\n") if ( system('convert', $_, '-background', 'white', '-flatten', '-quality', '95%', '/tmp/printphotos.jpg')!=0 ) ;
+		die("Could not convert\n") if ( system('convert', $_, '-background', 'white', '-flatten', '-quality', '100%', '/tmp/printphotos.jpg')!=0 ) ;
 		print "ok\n";
 		$_ = '/tmp/printphotos.jpg';
 		$singleQuotedFileName = '/tmp/printphotos.jpg';
