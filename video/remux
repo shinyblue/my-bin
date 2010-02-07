@@ -1,0 +1,78 @@
+#!/bin/bash
+
+while getopts "o:t:h" opt; do
+	case $opt in
+		h )	echo 'usage: remux -t tempdir -o ouputdir [-h] file1 [file2...]'
+			exit 0 ;;
+		o )	outdir=$OPTARG;;
+		t )	tmpdir=$OPTARG;;
+	esac
+done
+
+if [ "$outdir" = "" ]
+then
+	outdir=`pwd`
+fi
+
+if [ "$tmpdir" = "" ]
+then
+	tmpdir="/tmp"
+fi
+
+shift $(($OPTIND - 1))
+
+until [ -z "$1" ]  # Until all parameters used up . . .
+do
+
+	filename=$1
+	echo remuxing "$filename"
+	basename=`basename "$filename"`
+	basename=${basename%.*}
+
+	dstfile=$outdir/$basename.mpg
+
+	projectx -demux -out "$tmpdir" "$filename" >> "$tmpdir/remux.log" 2>> "$tmpdir/remux.log"
+
+	if [ $? -eq 0 ]
+	then
+
+		echo Finding largest audio file. >> "$tmpdir/remux.log"
+		largestfilesize=0
+		largestfile="nothing"
+
+		for i in $tmpdir/*mp2
+		do
+	        	currentfilesize=$(stat -c%s "$i")
+
+		        if (( $currentfilesize > $largestfilesize ))
+	                then
+				echo $i is bigger than $largestfile. Updating largest file. >> "$tmpdir/remux.log"
+				largestfile="$i"
+        	                largestfilesize=$currentfilesize
+			else
+				echo $i is smaller than $largestfile. Doing nothing. >> "$tmpdir/remux.log"
+                	fi
+	
+		done
+
+		mplex -f 3 -o "$dstfile" "$tmpdir/$basename.m2v" "$largestfile" >> "$tmpdir/remux.log" 2>> "$tmpdir/remux.log"
+
+		if [ $? -eq 0 ]
+		then
+			rm -f "$tmpdir/$basename"*
+			rm -f "$tmpdir/remux.log"
+		else
+			echo mplex failed! >> "$tmpdir/remux.log"
+			echo remux of "$filename" failed >&2 
+			rm -f "$tmpdir/$basename"*
+			mv "$tmpdir/remux.log" "$tmpdir/$filename.log"
+		fi
+	else
+		echo projectx failed! >> "$tmpdir/remux.log"
+		echo remux of "$filename" failed >&2
+		rm -f "$tmpdir/$basename"*
+		mv "$tmpdir/remux.log" "$tmpdir/$filename.log"
+	fi
+	
+	shift
+done

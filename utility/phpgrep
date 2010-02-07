@@ -40,4 +40,4 @@ done
 # }}} end of parsing
 
 # echo 'find . -name "*php" -or -name "*phptemplate" '$others'  | fgrep -v .svn | xargs grep '"${args[@]}" 
-find . -name "*php" -or -name "*phptemplate" $others | xargs grep "${args[@]}" 
+find . \( -name "*php" -or -name "*phptemplate" $others \) -exec grep --color=auto "${args[@]}" \{\} +
