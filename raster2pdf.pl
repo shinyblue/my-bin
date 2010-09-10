@@ -15,10 +15,11 @@ my %opts = (
 		'bw'        => 0,      
 		'threshold' => '80%',  
 		'help'      => 0,
+		'quality'   => 'default',
 		'outfile'   => ''
 		);
 
-GetOptions (\%opts, 'bw!','threshold=s','help' );
+GetOptions (\%opts, 'bw!','threshold=s','help','quality=s' );
 pod2usage(1) if ($opts{'help'});
 
 # validate options and throw help back if the dear user has clearly misunderstood
@@ -69,7 +70,7 @@ foreach (@inputs)
 		'-e:scale', 
 		$_, $_ . '.ps') ;
 	print "...";
-	system("ps2pdf14", '-sPAPERSIZE=a4', $_ . '.ps', $_ . '.pdf');
+	system("ps2pdf14", '-sPAPERSIZE=a4', "-dPDFSETTINGS=/$opts{quality}", $_ . '.ps', $_ . '.pdf');
 	print "done\n";
 }
 
@@ -100,6 +101,10 @@ raster2pdf.pl [options] outfile.pdf infile.jpg [infile.jpg ... ]
 =head1 OPTIONS
 
 =over 8
+
+=item B<-quality> default|prepress|printer|ebook|screen
+
+PDF setting.
 
 =item B<-bw>
 
