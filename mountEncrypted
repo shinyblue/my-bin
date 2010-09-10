@@ -1,0 +1,135 @@
+#!/bin/bash
+
+function looptoimage
+{
+	sudo losetup $1 | sed 's:^.*(\(.*\)):\1:'
+}
+
+function nametoloop
+{
+	sudo cryptsetup status $1 2>&1 | egrep -o /dev/loop.
+}
+
+if [ "$1" = "-h" ]
+then
+	echo "Usage: (nb. options MUST be at start)"
+	echo "    $0 [image [name]]";
+	echo "    $0 -u [name]";
+	echo "    $0 -l";
+	echo "    $0 -h";
+	exit
+elif [ "$1" = "-u" ]
+then
+	# unmount
+	if mount | fgrep /mnt/$2
+	then 
+		if sudo umount /mnt/$2
+		then echo "    unmounted /mnt/$2 ok"
+		else
+			echo "X   failed unmounting /mnt/$2 - stopped"
+			exit 1
+		fi
+	else
+		echo "    /mnt/$2 not mounted anyway..."
+	fi
+
+	# remove crypt setup
+	if [ -e /dev/mapper/$2 ]
+	then
+		LOOP=`nametoloop $2`
+
+		if sudo cryptsetup remove $2
+		then
+			echo "    removed crypt device for $2 loop is $LOOP"
+	   	else 
+			echo "X   could not remove $2!"
+			exit 1
+		fi
+
+		# remove loop
+		IMAGE=`looptoimage $LOOP`
+		
+		if sudo losetup -d $LOOP
+		then
+			echo "    removed loop"
+		else
+			echo "X   Failed removing loop $LOOP!"
+			exit 1
+		fi
+
+		# touch image
+		touch "$IMAGE"
+		echo "    touched $IMAGE to update mtime"
+	fi
+
+	exit 0
+elif [ "$1" = "-l" ]
+then
+	mount | fgrep /dev/mapper | while read entry
+	do
+		set -- $entry
+		NAME=${1##/dev/mapper/}
+		MP=$3
+		LOOP=`nametoloop $NAME`
+		IMAGE=`looptoimage $LOOP`
+		echo "$MP -> $NAME -> $LOOP -> $IMAGE"
+	done
+
+	exit;
+fi
+
+SECRETS=${1:-/home/rich/encrypted.img}
+
+# check image exists
+if [ ! -f "$SECRETS" ]
+then
+	echo "X   $SECRETS does not exist!"
+	exit
+fi
+
+FN="${SECRETS##*/}"
+NAME=${2:-${FN:-enc}}
+echo "    Trying to setup $SECRETS -> /mnt/$NAME"
+
+# check /mnt/$NAME not already mounted
+if mount | grep /mnt/$NAME >/dev/null
+then
+	echo "    Already mounted"
+	exit
+fi
+
+# set up loop
+EXISTINGLOOP=`sudo losetup -j "$SECRETS"`;
+if [ -n "$EXISTINGLOOP" ]
+then
+	LOOP=${EXISTINGLOOP%%:*}
+	echo "    Loop already set up. ($LOOP)"
+else
+	LOOP=`sudo losetup -f`
+	echo "    setting up loop ($LOOP)"
+	sudo losetup $LOOP $SECRETS
+fi
+
+# set up crypt mapper
+if [ ! -e /dev/mapper/$NAME ]
+then
+	echo "    setting up encryption for $NAME"
+	sudo cryptsetup create $NAME $LOOP
+fi
+
+# mount
+echo "    mounting at /mnt/$NAME"
+if [ ! -d "/mnt/$NAME" ] 
+then
+	echo "    Creating /mnt/$NAME"
+	sudo mkdir -m777 "/mnt/$NAME"
+fi
+
+if sudo mount /dev/mapper/$NAME /mnt/$NAME 
+then ls /mnt/$NAME
+else
+	echo "    Failed to mount. Wrong passphrase? Undo-ing setup...";
+	sudo cryptsetup remove $NAME
+	sudo losetup -d $LOOP
+fi
+
