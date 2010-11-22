@@ -78,10 +78,11 @@ then
 	exit;
 fi
 
+# filepath to image or device
 SECRETS=${1:-/home/rich/encrypted.img}
 
 # check image exists
-if [ ! -f "$SECRETS" ]
+if [ ! -e "$SECRETS" ]
 then
 	echo "X   $SECRETS does not exist!"
 	exit
