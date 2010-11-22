@@ -19,16 +19,21 @@ do
 
 	# include css
 	"-css" )
-		others="$others "' -or -name "*css"' 
+		others=( "${others[@]}"  "-or" "-name" "*css" )
 		echo Searching css files too.
 		;;
 
 	# include js
 	"-js" )
-		others="$others "' -or -name "*js"' 
+		others=( "${others[@]}"  "-or" "-name" "*js" )
 		echo Searching js files too.
 		;;
 	
+	# include tpl
+	"-tpl" )
+		others=( "${others[@]}"  "-or" "-name" "*tpl" )
+		echo Searching tpl files too.
+		;;
 	# collect other args
 	*)
 		[ "${#args}" -eq 0 ] && args=( "$1" ) || args=( "${args[@]}" "$1" )
@@ -39,5 +44,4 @@ done
 
 # }}} end of parsing
 
-# echo 'find . -name "*php" -or -name "*phptemplate" '$others'  | fgrep -v .svn | xargs grep '"${args[@]}" 
-find . \( -name "*php" -or -name "*phptemplate" $others \) -exec grep --color=auto "${args[@]}" \{\} +
+find . \( -name "*.php" -or -name "*.phptemplate" -or -name "*.inc" ${others[@]} \) -exec grep "${args[@]}" '{}' \+
