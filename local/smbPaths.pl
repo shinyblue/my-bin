@@ -1,7 +1,8 @@
 #!/usr/bin/perl -w
 use strict;
 
-open( LOG, ">/home/rich/smbPaths.log" );
+open( LOG, ">>/home/rich/smbPaths.log" );
+print LOG "--------------------------------------\n" . `date` . "\n";
 print LOG "@ARGV \n";
 
 my $usage = "Usage: $0 [-b|--browse] [-s|--smb] filepath\n".

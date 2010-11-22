@@ -1,5 +1,31 @@
 #!/bin/bash
 
+function checkrequirements
+{
+	fail=""
+	if [ -z `which cryptsetup` ] 
+	then
+		echo "X   Cannot run - cryptsetup required. Suggest apt-get install cryptsetup"
+		fail=1
+	fi
+	x=`lsmod | grep ^dm_crypt` 
+	if [ -z "$x" ]
+	then
+		echo "    Trying to modprobe dm_crypt..."
+		if sudo modprobe dm_crypt
+		then
+			echo "    dm_crypt installed."
+		else
+			echo "X   Cannot run - dm_crypt module not installed/installable."
+			fail=1
+		fi
+	fi
+
+	[ -z $fail ] && return
+	# fail
+	exit 1
+}
+
 function looptoimage
 {
 	sudo losetup $1 | sed 's:^.*(\(.*\)):\1:'
@@ -18,7 +44,11 @@ then
 	echo "    $0 -l";
 	echo "    $0 -h";
 	exit
-elif [ "$1" = "-u" ]
+fi
+
+checkrequirements
+
+if [ "$1" = "-u" ]
 then
 	# unmount
 	if mount | fgrep /mnt/$2

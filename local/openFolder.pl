@@ -42,7 +42,11 @@ my $file_manager = 'thunar';
 
 # 1. get clipboard
 $_ = `xclip -o`;
-output("Source: $_\n");
+# clean it up: trim 
+s/^\s*(.*)\s+$/$1/;
+# clean it up: replace line breaks with single spaces 
+s/[ \t][\r\n]+[ \t]+/ /g;
+output("Source (cleaned): $_\n");
 
 # 2. convert to server, share, path
 my ($server,$share,$pathWin,$pathNix) = ();
@@ -58,7 +62,7 @@ if ( m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
 	$share =~ s/(.*)/\l$1/;
 	$pathNix =~ s{\\}{/}g if $pathNix =~ m{^\\};
 	$pathWin =~ s{/}{\\}g if $pathWin =~ m{^/};
-	output("Parsed output: \n\tServer: $server\n\tShare: $share\n\tPath: $pathNix\n");
+	output("Parsed output: Server: $server Share: $share Path: $pathNix\n");
 }
 else
 {
@@ -70,7 +74,7 @@ mydie("share $server/$share not mounted?") unless ( -d "/smb/$server/$share" );
 
 # check it exists
 my $path = "/smb/$server/$share/$pathNix";
-mydie("file/folder does not exist") unless ( -e $path );
+mydie("file/folder does not exist: $path") unless ( -e $path );
 
 if (! $opts{'file'})
 {
