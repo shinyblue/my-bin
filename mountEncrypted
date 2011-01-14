@@ -145,7 +145,7 @@ fi
 if [ ! -e /dev/mapper/$NAME ]
 then
 	echo "    setting up encryption for $NAME"
-	sudo cryptsetup create $NAME $LOOP
+	sudo cryptsetup --cipher=aes --key-size=256 --hash=ripemd160 create $NAME $LOOP
 fi
 
 # mount
