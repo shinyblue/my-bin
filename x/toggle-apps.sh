@@ -3,18 +3,20 @@
 function usage
 {
 	[ -n "$*" ] && echo "ERROR: $*" >&2
-	echo "Usage: toggle-apps window_class launch_cmd"
+	echo "Usage: toggle-apps [--class classname] launch_cmd"
+	echo "Options"
+	echo "--class classname"
+    echo "          For some apps you might need to specify the class name"
+	echo "          Generally though the launch command will do."
 	exit 1
 }
 
-WINDOW_CLASS=$1
-shift
-[ -z "$WINDOW_CLASS" ] && usage 
 
 LAUNCH_CMD=("$@")
 [ "${#LAUNCH_CMD[@]}" -lt 1 ] && usage "No launch command provided"
 
 CMD_NAME="${LAUNCH_CMD[0]}"
+WINDOW_CLASS="$CMD_NAME"
 
 ## Set the appropriate window ID.
 function setwid 
@@ -53,6 +55,8 @@ then
 		# sleep 0.5s
 		# wmctrl -i -r $WID -b remove,above
 		# wmctrl -i -r $WID -b add,hidden
+		wmctrl -i -r $WID -a
+		sleep 0.1
 		xdotool key alt+F9
     else 
 
