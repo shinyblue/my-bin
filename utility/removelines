@@ -2,14 +2,10 @@
 <?php
 /* remove lines found in one file from another.
 */
-if (!($toremove = file( $argv[1] ))) {
-	fwrite(STDERR,"Cannot open $argv[1]\n");
-	exit;
-}
-if (!($removefrom = file( $argv[2] ))) {
-	fwrite(STDERR,"Cannot open $argv[2]\n");
-	exit;
-}
-$out= str_replace( $toremove, '', $removefrom);
-foreach ($out as $key=>$val) if ($val!='' && $val!="\n") fwrite(STDOUT, $val); 
+$toremove = explode("\n",file_get_contents($argv[1]));
+$toremove = array_flip($toremove);
+
+$removefrom = explode("\n",file_get_contents($argv[2]));
+foreach ($removefrom as $_)
+	if (!array_key_exists($_, $toremove)) echo "$_\n";
 ?>

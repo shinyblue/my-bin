@@ -100,7 +100,7 @@ else
 	deintstr=
 fi
 
-vcodec=h426
+vcodec=h264
 acodec=mp4a
 container=mp4
 
@@ -113,6 +113,7 @@ echo "Input file: $infile"
 echo "Output file: $outfile"
 echo "Encoding at $bitrate+$arate kb/s, input $src, $aspect, cropping $crop, de-interlace $deint"
 echo
-echo '>>>' $VLC -I dummy "$infile" --sout "#transcode{$sizestr$deintstr,vcodec=$vcodec,vb=$bitrate,acodec=$acodec,ab=$arate}:standard{mux=$container,dst=\"$outfile\",access=file}" vlc://quit
+echo '>>>' $VLC -I dummy "$infile" --sout "#transcode{$sizestr$deintstr,vcodec=$vcodec,vb=$bitrate,acodec=$acodec,ab=$arate,audio-sync}:standard{mux=$container,dst=\"$outfile\",access=file}" vlc://quit
 echo
-$VLC -I dummy "$infile" --sout "#transcode{$sizestr$deintstr,vcodec=$vcodex,vb=$bitrate,acodec=$acodex,ab=$arate}:standard{mux=$container,dst=\"$outfile\",access=file}" vlc://quit
+#acodec=$acodex,ab=$arate,
+$VLC -I dummy "$infile" --sout "#transcode{$sizestr$deintstr,vcodec=$vcodex,vb=$bitrate,audio-sync}:standard{mux=$container,dst=\"$outfile\",access=file}" vlc://quit

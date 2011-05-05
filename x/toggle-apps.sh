@@ -25,10 +25,10 @@ function setwid
 	WID=
 
 	# load previous terminal window id, if file exists
-	[ -e "$CACHE" ] && PREV=$(<"$CACHE")
+#	[ -e "$CACHE" ] && PREV=$(<"$CACHE")
 
 	# if we have previous one, see if it's still available
-	[ -n "$PREV" ] && WID=`xdotool search --class "$WINDOW_CLASS" | fgrep "$PREV"`
+#	[ -n "$PREV" ] && WID=`xdotool search --class "$WINDOW_CLASS" | fgrep "$PREV"`
 
 	# if we don't have an id yet, try taking the first available one
 	[ -z "$WID" ] && WID=`xdotool search --class "$WINDOW_CLASS" | head -1`
