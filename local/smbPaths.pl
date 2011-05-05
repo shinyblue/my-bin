@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 use strict;
 
-open( LOG, ">>/home/rich/smbPaths.log" );
+open( LOG, ">>$ENV{HOME}/smbPaths.log" );
 print LOG "--------------------------------------\n" . `date` . "\n";
 print LOG "@ARGV \n";
 
