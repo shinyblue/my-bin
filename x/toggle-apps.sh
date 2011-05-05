@@ -25,7 +25,7 @@ function setwid
 	WID=
 
 	# load previous terminal window id, if file exists
-#	[ -e "$CACHE" ] && PREV=$(<"$CACHE")
+	#[ -e "$CACHE" ] && PREV=$(<"$CACHE")
 
 	# if we have previous one, see if it's still available
 #	[ -n "$PREV" ] && WID=`xdotool search --class "$WINDOW_CLASS" | fgrep "$PREV"`
@@ -38,7 +38,7 @@ function setwid
 	echo "WID $WID"
 }
 
-echo "Looking for $CMD_NAME"
+echo "Looking for $CMD_NAME is process table"
 pgrep -u "$USER" "$CMD_NAME" | grep -qv "$$"
 
 ## If there's already a $WINDOW_CLASS running -- signified by

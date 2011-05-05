@@ -20,15 +20,12 @@ maui	rsyncbackup	public
 # Normal public, browsable shares
 #
 oahu	archive	public
-oahu	cot	public
-oahu	cot	public
 oahu	design	public
 oahu	hr	public
 oahu	imdexdev	public
 oahu	logos	public
 oahu	org	public
 oahu	photos	public
-oahu	sas	public
 oahu	staff	public
 #
 # Oahu:

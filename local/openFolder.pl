@@ -37,11 +37,11 @@ pod2usage(1) if ($opts{'help'});
 #
 
 
-my $file_manager = 'thunar';
+my $file_manager = 'nautilus';
 
 
 # 1. get clipboard
-$_ = `xclip -o`;
+$_ = `xclip -o -selection clipboard`;
 # clean it up: trim 
 s/^\s*(.*)\s+$/$1/;
 # clean it up: replace line breaks with single spaces 
@@ -92,7 +92,9 @@ sub output
 }
 sub mydie
 {
-	output( @_ );
+	my ($msg) = @_;
+	output( $msg );
+	system("notify-send","-i","error","Could not open filepath", $msg );
 	exit 1;
 }
 
