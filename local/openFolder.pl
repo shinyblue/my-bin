@@ -106,10 +106,11 @@ if ( m{^/[^/]} )
 }
 
 my ($server,$share,$pathWin,$pathNix) = ();
-if ( m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
-	     m{^//([\w.]+?)/([\w.]+?)(/.*$|$)} 	 ||
-	 m{^/($serversList)/([\w.]+?)(/.*$|$)} ||
-	             m{^\\\\([\w.]+?)\\([\w.]+?)(\\.*$|$)} )
+if (        m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
+	            m{^//([\w.]+?)/([\w.]+?)(/.*$|$)} ||
+	        m{^/($serversList)/([\w.]+?)(/.*$|$)} ||
+	 m{^file:///($serversList)/([\w.]+?)(/.*$|$)} ||
+	        m{^\\\\([\w.]+?)\\([\w.]+?)(\\.*$|$)} )
 {
 	$server = $1;
 	$share = $2;
@@ -127,8 +128,7 @@ if ( m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
 else
 {
 	output("FAIL: didn't recognise $_\n");
-	notify("FAIL: did not recognise", $_);
-	mydie('didn\'t recognise ' .$_);
+	mydie('Didn\'t recognise ' .$_);
 }
 # }}}
 
