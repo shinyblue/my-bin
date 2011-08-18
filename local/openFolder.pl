@@ -118,11 +118,11 @@ if (        m{^smb://([\w.]+?)/([\w.]+?)(/.*$|$)} ||
 	$pathNix = $3;
 	if ($pathNix)
 	{
-		$pathNix =~ s{^.}{};
-			
 		$pathWin = $pathNix;
 		$pathNix =~ s{\\}{/}g if $pathNix =~ m{^\\};
 		$pathWin =~ s{/}{\\}g if $pathWin =~ m{^/};
+		$pathNix =~ s{^.}{}; # strip dir separator
+		$pathWin =~ s{^.}{}; # strip dir separator
 	}
 }
 else
@@ -152,7 +152,7 @@ sub notify { # {{{
 	my (@params) = (@_);
 	if (!$use_notify)
 	{
-		print LOG "(no notify-send): ", @params;
+		print "(no notify-send): ", @params;
 		return;
 	}
 	# the notify command requires backslashes to be escaped
